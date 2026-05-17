@@ -1,0 +1,3 @@
+-- Common base for the NFL formalization project.
+-- Kept empty: each theorem file imports only the Mathlib modules it needs,
+-- so iteration stays fast.
