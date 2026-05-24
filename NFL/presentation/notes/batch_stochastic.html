@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Batch Stochastic No-Free-Lunch — Notes</title>
+
+  <!-- KaTeX -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {
+      delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '\\[', right: '\\]', display: true},
+        {left: '$', right: '$', display: false},
+        {left: '\\(', right: '\\)', display: false}
+      ]
+    });"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    :root {
+      --primary:   #2D5172;
+      --teal:      #2E7D6F;
+      --red:       #C04040;
+      --gold:      #B08020;
+      --body-text: #2D3A4A;
+      --bg:        #FFFFFF;
+      --box-bg:    #F2F4F7;
+      --rule:      #C0C8D0;
+      --code-kw:   #C04040;
+      --code-cm:   #888888;
+    }
+
+    html { font-size: 17px; }
+
+    body {
+      font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+      color: var(--body-text);
+      background: var(--bg);
+      margin: 0;
+      padding: 0;
+    }
+
+    nav.topnav {
+      background: var(--primary);
+      padding: 0.55rem 2.5rem;
+      font-size: 0.82rem;
+      color: #fff;
+      letter-spacing: 0.02em;
+    }
+    nav.topnav a { color: #b8cfe0; text-decoration: none; }
+    nav.topnav a:hover { color: #fff; }
+    nav.topnav span { margin: 0 0.35em; color: #8aadc8; }
+
+    .page-wrap {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 2.8rem 2.5rem 5rem;
+    }
+
+    h1.page-title {
+      font-size: 1.9rem;
+      color: var(--primary);
+      margin: 0 0 0.25rem;
+      font-weight: normal;
+    }
+    .subtitle {
+      font-size: 1.05rem;
+      color: var(--teal);
+      margin: 0 0 0.5rem;
+      font-style: italic;
+    }
+    .meta {
+      font-size: 0.82rem;
+      color: var(--code-cm);
+      margin-bottom: 2rem;
+    }
+    hr.title-rule {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 1.2rem 0 2rem;
+    }
+
+    h2 {
+      font-size: 1.28rem;
+      color: var(--primary);
+      font-weight: bold;
+      margin: 2.8rem 0 0.7rem;
+      padding-bottom: 0.3rem;
+      border-bottom: 2px solid var(--primary);
+    }
+    h3 {
+      font-size: 1.05rem;
+      color: var(--primary);
+      font-weight: bold;
+      margin: 1.6rem 0 0.4rem;
+    }
+
+    .env {
+      background: var(--box-bg);
+      border-radius: 4px;
+      padding: 1rem 1.25rem;
+      margin: 1.2rem 0;
+      position: relative;
+    }
+    .env-label {
+      font-weight: bold;
+      color: var(--primary);
+      margin-right: 0.35em;
+    }
+    .env-title {
+      font-style: italic;
+      color: var(--body-text);
+      margin-right: 0.35em;
+    }
+
+    .env.definition { border-left: 4px solid var(--teal); }
+    .env.definition .env-label { color: var(--teal); }
+
+    .env.theorem { border-left: 4px solid var(--primary); }
+
+    .env.lemma { border-left: 4px solid #4a7aab; }
+    .env.lemma .env-label { color: #4a7aab; }
+
+    .env.remark { border-left: 4px solid var(--gold); background: #faf6ec; }
+    .env.remark .env-label { color: var(--gold); }
+
+    .env.proof {
+      background: #f8f9fa;
+      border-left: 4px solid var(--rule);
+    }
+    .env.proof .env-label { color: var(--body-text); font-style: italic; font-weight: bold; }
+    .qed {
+      text-align: right;
+      font-size: 1.1rem;
+      color: var(--primary);
+      margin-top: 0.4rem;
+    }
+
+    .algorithm {
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      padding: 0.85rem 1.2rem;
+      margin: 1.2rem 0;
+      font-size: 0.95rem;
+    }
+    .algorithm-header {
+      font-weight: bold;
+      color: var(--primary);
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 0.4rem;
+      margin-bottom: 0.6rem;
+    }
+    .algorithm ol, .algorithm ul { margin: 0.3rem 0; padding-left: 1.6rem; }
+    .algorithm li { margin: 0.25rem 0; }
+
+    code {
+      font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+      font-size: 0.87em;
+      background: #eef0f3;
+      padding: 0.1em 0.35em;
+      border-radius: 3px;
+      color: var(--code-kw);
+    }
+
+    pre.lean {
+      font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+      font-size: 0.83rem;
+      background: #1e1e2e;
+      color: #cdd6f4;
+      padding: 1rem 1.2rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      line-height: 1.55;
+      margin: 1rem 0;
+    }
+    pre.lean .kw  { color: #cba6f7; }
+    pre.lean .fn  { color: #89b4fa; }
+    pre.lean .cm  { color: #585b70; font-style: italic; }
+    pre.lean .st  { color: #a6e3a1; }
+    pre.lean .num { color: #fab387; }
+    pre.lean .ty  { color: #94e2d5; }
+
+    .takeaway {
+      background: #eef6f4;
+      border-left: 4px solid var(--teal);
+      padding: 0.75rem 1.2rem;
+      margin: 1.2rem 0;
+      color: var(--teal);
+      font-style: italic;
+      border-radius: 0 4px 4px 0;
+    }
+    .takeaway strong { font-style: normal; }
+
+    p { margin: 0.7rem 0; line-height: 1.72; }
+    ul, ol { line-height: 1.72; padding-left: 1.8rem; }
+    li { margin: 0.2rem 0; }
+    strong { color: var(--primary); }
+
+    .footnote {
+      font-size: 0.82rem;
+      color: var(--code-cm);
+      border-top: 1px solid var(--rule);
+      margin-top: 3rem;
+      padding-top: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="topnav">
+  <a href="#">DSC 190/291</a>
+  <span>/</span>
+  <a href="#">No-Free-Lunch</a>
+  <span>/</span>
+  Batch Stochastic NFL
+</nav>
+
+<div class="page-wrap">
+
+  <h1 class="page-title">Batch Stochastic No-Free-Lunch</h1>
+  <p class="subtitle">Week — No-Free-Lunch Theorems</p>
+  <p class="meta">DSC 190/291 Learning Theory &nbsp;·&nbsp; Tianhao Wang &nbsp;·&nbsp; UCSD Spring 2026</p>
+  <hr class="title-rule" />
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2>1. Setting</h2>
+
+  <p>
+    In the batch stochastic setting, a learner receives a random i.i.d. sample of
+    labelled examples and outputs a hypothesis. The Batch Stochastic NFL theorem says
+    that for any learner, there exists a realizable distribution on which the learner
+    fails with constant probability.
+  </p>
+
+  <div class="env definition">
+    <span class="env-label">Definition 1</span>
+    <span class="env-title">(Domain and binary classification).</span>
+    Let $\mathcal{X}$ be a finite measurable space.
+    A <strong>target function</strong> is any map $f : \mathcal{X} \to \{0,1\}$.
+    A distribution $D$ on $\mathcal{X} \times \{0,1\}$ is
+    <strong>realizable</strong> if there exists $f$ with $D\bigl(\{(x, f(x))\}\bigr) = 1$,
+    i.e., all labels are correct under $f$.
+  </div>
+
+  <div class="env definition">
+    <span class="env-label">Definition 2</span>
+    <span class="env-title">(Deterministic learner).</span>
+    A <strong>deterministic learner</strong> is a function
+    $$A : \bigl(\mathcal{X} \times \{0,1\}\bigr)^* \;\longrightarrow\; (\mathcal{X} \to \{0,1\}).$$
+    Given a training sequence $S \in (\mathcal{X} \times \{0,1\})^m$, $A$ outputs a
+    hypothesis $A(S) : \mathcal{X} \to \{0,1\}$.
+  </div>
+
+  <div class="env definition">
+    <span class="env-label">Definition 3</span>
+    <span class="env-title">(Risk and failure probability).</span>
+    The <strong>risk</strong> of hypothesis $h$ under distribution $D$ is
+    $$R(D, h) \;:=\; \mathbb{E}_{(x,y)\sim D}\bigl[\mathbf{1}[h(x) \neq y]\bigr].$$
+    The <strong>failure probability</strong> of learner $A$ on $m$ i.i.d. samples from $D$ is
+    $$\delta(D, A, m) \;:=\; \Pr_{S \sim D^m}\bigl[R(D,\, A(S)) \geq \tfrac{1}{8}\bigr].$$
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2>2. Main Theorem</h2>
+
+  <div class="env theorem">
+    <span class="env-label">Theorem 1</span>
+    <span class="env-title">(Batch Stochastic No-Free-Lunch).</span>
+    Let $\mathcal{X}$ be a finite domain with $|\mathcal{X}| \geq 2m$.
+    For any deterministic learner $A$, there exists a realizable distribution $D$
+    on $\mathcal{X} \times \{0,1\}$ such that
+    $$\delta(D,\, A,\, m) \;\geq\; \frac{1}{7}.$$
+    That is, with probability at least $1/7$ over $m$ i.i.d. samples from $D$,
+    the learner's hypothesis has risk at least $1/8$.
+  </div>
+
+  <div class="takeaway">
+    <strong>Takeaway.</strong>
+    No matter how clever the learner, there is always a realizable distribution
+    for which it fails (risk $\geq 1/8$) on at least $1/7$ of all training samples
+    of size $m$.
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2>3. Proof</h2>
+
+  <h3>Case 1: zero samples ($m = 0$)</h3>
+
+  <div class="env proof">
+    <span class="env-label">Base case.</span>
+    With no training data, $A([])$ is a fixed hypothesis.
+    Let $x_0 \in \mathcal{X}$ be any point and set $b := \lnot A([])(x_0)$.
+    Define $D := \mathrm{Dirac}(x_0, b)$ — the Dirac measure at the single
+    labelled point $(x_0, b)$.
+    <ul>
+      <li>$D$ is realizable via $f(x_0) = b$ (extended arbitrarily).</li>
+      <li>The unique 0-sample "training set" is the empty list, so
+          $A([])$ predicts $\lnot b$ at $x_0$, giving risk $= 1 \geq 1/8$.</li>
+      <li>The $D^0$ measure of the failure event is 1 (the only sample is the
+          empty sequence), so $\delta(D, A, 0) = 1 \geq 1/7$.</li>
+    </ul>
+    <div class="qed">□</div>
+  </div>
+
+  <h3>Case 2: positive samples ($m \geq 1$)</h3>
+
+  <p>
+    The positive-sample case uses a four-step argument: pick a support,
+    prove a fixed-sample lower bound, derive a contradiction via double-counting,
+    and bridge from the combinatorial setting to the measure-theoretic one.
+  </p>
+
+  <h3>Step 1: Pick a support $C$ of size $2m$</h3>
+
+  <p>
+    Since $2m \leq |\mathcal{X}|$, choose a finset $C \subseteq \mathcal{X}$
+    with $|C| = 2m$.
+    For any labelling $f : C \to \{0,1\}$, define $D_f$ to be the
+    <strong>uniform distribution on the labelled graph</strong> of $f$ over $C$:
+    $$D_f := \mathrm{Uniform}\bigl(\{(x, f(x)) : x \in C\}\bigr).$$
+    The distribution $D_f$ is realizable (by construction, $f$ has risk 0 under $D_f$).
+  </p>
+
+  <h3>Step 2: Fixed-sample lower bound</h3>
+
+  <div class="env lemma">
+    <span class="env-label">Lemma 2</span>
+    <span class="env-title">(Average risk $\geq \frac{|\mathcal{F}|}{4}$).</span>
+    Let $\mathcal{F} = \{0,1\}^C$ be all labellings and $\Omega = (C)^m$ be all
+    samples. For any sample $S \in \Omega$,
+    $$\frac{1}{|\mathcal{F}|} \sum_{f \in \mathcal{F}}
+        R(D_f,\, A(\mathrm{sample}(S, f))) \;\geq\; \frac{1}{4}.$$
+  </div>
+
+  <div class="env proof">
+    <span class="env-label">Proof sketch.</span>
+    The sample $S = (z_1, \ldots, z_m)$ queries only $m$ of the $2m$ points in $C$.
+    Let $U$ be the set of <em>unseen</em> points: $|U| \geq m$ (by a cardinality argument).
+    For any unseen point $z \in U$, the label $f(z)$ is invisible to $A$,
+    so pairing each labelling $f$ with its flip $f^z$ at $z$ shows that
+    the two labels contribute total risk 1 at $z$. Summing over $m$ unseen points
+    and dividing by $|C| = 2m$ gives average risk $\geq m/(2m) = 1/2$ per
+    consistent pair, hence average risk $\geq 1/4$ overall.
+    <div class="qed">□</div>
+  </div>
+
+  <h3>Step 3: Contradiction by double-counting</h3>
+
+  <p>
+    Suppose, for contradiction, that for <em>every</em> labelling $f \in \mathcal{F}$,
+    the failure rate satisfies
+    $$\delta_f \;:=\; \frac{|\{S \in \Omega : R(D_f, A(S)) \geq 1/8\}|}{|\Omega|}
+      < \frac{1}{7}.$$
+    Consider the double sum
+    $$\Sigma := \frac{1}{|\mathcal{F}||\Omega|}
+      \sum_{f \in \mathcal{F}} \sum_{S \in \Omega} R(D_f, A(S)).$$
+  </p>
+
+  <ul>
+    <li>
+      <strong>Upper bound (from failure-rate hypothesis):</strong>
+      For each $(f, S)$ pair, $R(D_f, A(S)) \leq 1$ always.
+      On "bad" samples ($R \geq 1/8$) use bound 1; on "good" samples use bound $1/8 - \varepsilon$:
+      $$\frac{1}{|\Omega|}\sum_S R(D_f, A(S))
+        \leq \delta_f \cdot 1 + (1 - \delta_f) \cdot 1
+        < \frac{1}{7} + \frac{1}{8} = \frac{15}{56} < \frac{1}{4}.$$
+      Averaging over $f$ gives $\Sigma < 1/4$.
+    </li>
+    <li>
+      <strong>Lower bound (from Lemma 2):</strong>
+      Swapping the order of summation (Fubini) and applying Lemma 2 to each $S$ gives
+      $\Sigma \geq 1/4$.
+    </li>
+  </ul>
+
+  <p>
+    These two bounds contradict each other, so some $f \in \mathcal{F}$ must have
+    $\delta_f \geq 1/7$.
+  </p>
+
+  <h3>Step 4: Bridge to the measure-theoretic setting</h3>
+
+  <div class="env lemma">
+    <span class="env-label">Lemma 3</span>
+    <span class="env-title">(Measure bridge).</span>
+    The failure rate $\delta_f$ computed combinatorially (as a proportion of uniform
+    samples from $C^m$) is bounded above by the measure-theoretic failure probability
+    $\delta(D_f, A, m)$.
+  </div>
+
+  <p>
+    The proof uses the fact that the product measure $D_f^m$, when restricted to
+    the event that all $m$ samples land in the support-indexed set, assigns exactly
+    the same probability as the uniform combinatorial distribution over
+    $\Omega = C^m$. Bad combinatorial samples embed injectively into the
+    $D_f^m$-failure event, and measure is preserved under this embedding.
+  </p>
+
+  <div class="env proof">
+    <span class="env-label">Conclusion.</span>
+    From Step 3, pick $f^* \in \mathcal{F}$ with $\delta_{f^*} \geq 1/7$.
+    By Lemma 3, $\delta(D_{f^*}, A, m) \geq \delta_{f^*} \geq 1/7$.
+    Set $D = D_{f^*}$; this distribution is realizable, and $\delta(D, A, m) \geq 1/7$.
+    <div class="qed">□</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2>4. Proof Summary</h2>
+
+  <div class="algorithm">
+    <div class="algorithm-header">Proof structure at a glance</div>
+    <ol>
+      <li><strong>$m = 0$:</strong> Dirac at a single point labelled adversarially.</li>
+      <li><strong>$m \geq 1$:</strong>
+        <ol type="a">
+          <li>Pick support $C \subseteq \mathcal{X}$ with $|C| = 2m$.</li>
+          <li>For each $f : C \to \{0,1\}$, define $D_f = $ uniform on graph of $f$.</li>
+          <li>Lower bound: average risk over all $(f, S)$ pairs $\geq 1/4$
+              (unseen points contribute independent label pairs).</li>
+          <li>Contradiction: if every $\delta_f < 1/7$, then average risk $< 1/4$
+              (piecewise upper bound + Fubini), contradiction.</li>
+          <li>Bridge: combinatorial failure rate $\leq$ measure-theoretic failure probability.</li>
+        </ol>
+      </li>
+    </ol>
+  </div>
+
+  <div class="env remark">
+    <span class="env-label">Remark</span>
+    <span class="env-title">(Why $1/7$ and $1/8$?).</span>
+    The constants are not tight. The bound $\delta_f < 1/7$ combined with the
+    piecewise risk bound $\leq 1/8$ on good samples yields average risk
+    $< 1/7 \cdot 1 + 6/7 \cdot 1/8 = 2/14 + 6/56 < 1/4$. The exact constants
+    are chosen to make the arithmetic work; tighter analysis gives stronger bounds.
+  </div>
+
+  <div class="env remark">
+    <span class="env-label">Remark</span>
+    <span class="env-title">(Why $|C| = 2m$?).</span>
+    We need at least $m$ unseen points in a sample of size $m$ from $C$.
+    With $|C| = 2m$ and a sample of size $m$, the pigeonhole principle guarantees
+    at least $m$ unseen points (the complement of the seen set has size $\geq m$).
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2>5. Formal Statement in Lean 4</h2>
+
+  <p>
+    The full machine-verified proof is in
+    <code>NFL/claude_full/BatchStochastic.lean</code>.
+    Below are the core definitions and the main theorem statement.
+  </p>
+
+<pre class="lean"><span class="cm">-- A deterministic learning algorithm</span>
+<span class="kw">abbrev</span> <span class="ty">Learner</span> (X : <span class="ty">Type</span>*) := <span class="ty">List</span> (X × <span class="ty">Bool</span>) → (X → <span class="ty">Bool</span>)
+
+<span class="cm">-- 0-1 loss on a single labelled example</span>
+<span class="kw">def</span> <span class="fn">zeroOneLoss</span> (h : X → <span class="ty">Bool</span>) (xy : X × <span class="ty">Bool</span>) : ℝ :=
+  <span class="kw">if</span> h xy.1 = xy.2 <span class="kw">then</span> <span class="num">0</span> <span class="kw">else</span> <span class="num">1</span>
+
+<span class="cm">-- Measure-theoretic risk</span>
+<span class="kw">noncomputable def</span> <span class="fn">risk</span> (D : <span class="ty">Measure</span> (X × <span class="ty">Bool</span>)) (h : X → <span class="ty">Bool</span>) : ℝ :=
+  ∫ xy, zeroOneLoss h xy ∂D
+
+<span class="cm">-- Failure probability over m i.i.d. samples</span>
+<span class="kw">noncomputable def</span> <span class="fn">failureProb</span>
+    (D : <span class="ty">Measure</span> (X × <span class="ty">Bool</span>)) (A : <span class="ty">Learner</span> X) (m : <span class="ty">Nat</span>) (ε : ℝ) : ℝ :=
+  ((<span class="ty">Measure</span>.pi (<span class="kw">fun</span> _ : <span class="ty">Fin</span> m => D))
+    {S : <span class="ty">Fin</span> m → (X × <span class="ty">Bool</span>) | ε ≤ risk D (A (<span class="ty">List</span>.ofFn S))}).toReal
+
+<span class="cm">-- Main theorem</span>
+<span class="kw">theorem</span> <span class="fn">batch_stochastic_NFL</span>
+    [<span class="ty">Fintype</span> X] [<span class="ty">MeasurableSingletonClass</span> X] [<span class="ty">Nonempty</span> X]
+    (A : <span class="ty">Learner</span> X) (m : <span class="ty">Nat</span>) (hm : <span class="num">2</span> * m ≤ <span class="ty">Fintype</span>.card X) :
+    ∃ D : <span class="ty">Measure</span> (X × <span class="ty">Bool</span>), <span class="ty">IsProbabilityMeasure</span> D ∧
+      (∃ f : X → <span class="ty">Bool</span>, risk D f = <span class="num">0</span>) ∧
+      (<span class="num">1</span> : ℝ) / <span class="num">7</span> ≤ failureProb D A m (<span class="num">1</span> / <span class="num">8</span>) := <span class="kw">by</span>
+  <span class="cm">-- m = 0 case: Dirac at a fooling point</span>
+  <span class="cm">-- m ≥ 1 case: support C of size 2m, double-counting contradiction</span>
+  cases Nat.eq_zero_or_pos m <span class="kw">with</span>
+  | inl hm0 => exact batch_stochastic_NFL_zero A
+  | inr hm_pos =>
+      obtain ⟨C, hCcard⟩ := exists_support_card m hm
+      <span class="cm">-- exists f* with combinatorial failure rate ≥ 1/7</span>
+      obtain ⟨fZ, hfZ⟩ := exists_abstractFailureRate_ge C hCcard A m hm_pos
+      <span class="cm">-- bridge: fZ induces a realizable measure with failure prob ≥ 1/7</span>
+      exact ⟨(graphPMF C fZ ⟨..⟩).toMeasure, inferInstance, ⟨fZ, ..⟩, ..⟩</pre>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2>6. Further Discussion</h2>
+
+  <h3>Comparison with the online adversarial setting</h3>
+  <p>
+    In the online adversarial theorem, the adversary picks the target
+    <em>after</em> seeing the learner's prediction. Here, the target $f$ is fixed
+    before sampling begins — it is an existential claim, not a minimax one.
+    The probabilistic difficulty comes not from an adaptive adversary but from the
+    inherent information-theoretic limitation of seeing only $m$ of the $2m$ points.
+  </p>
+
+  <h3>The role of the double-counting argument</h3>
+  <p>
+    The core of the proof is a Fubini-style interchange:
+    $$\frac{1}{|\mathcal{F}|}\sum_f \frac{1}{|\Omega|}\sum_S R_f(S)
+      = \frac{1}{|\Omega|}\sum_S \frac{1}{|\mathcal{F}|}\sum_f R_f(S)
+      \geq \frac{1}{4}.$$
+    If every $f$ had small failure rate, the left side would be $< 1/4$, contradicting
+    the right side. This is essentially a probabilistic pigeonhole argument.
+  </p>
+
+  <h3>Measure-theoretic bridge</h3>
+  <p>
+    The combinatorial argument works over the finite set $\Omega = C^m$, but the
+    theorem's conclusion is measure-theoretic (probability under $D^m$).
+    The bridge lemma shows that the uniform distribution over the support-indexed
+    sample space $\Omega$ is exactly the pushforward of $D_f^m$ along the
+    projection to $C$. This requires careful use of product-measure decompositions
+    and the fact that the bad-sample set embeds injectively into the $D_f^m$-failure
+    event.
+  </p>
+
+  <div class="takeaway">
+    <strong>Key insight.</strong>
+    The unseen half of the support $C$ provides information-theoretically independent
+    labels that no learner can predict, regardless of how it processes the seen half.
+    This inherent blindspot forces a constant fraction of samples to yield bad hypotheses.
+  </div>
+
+  <div class="footnote">
+    Lean 4 proof verified with Mathlib (v4.29.1, Lean 4).
+    See <code>NFL/claude_full/BatchStochastic.lean</code> and
+    <code>NFL/codex_full/BatchStochastic.lean</code> for the machine-checked proofs.
+  </div>
+
+</div><!-- .page-wrap -->
+</body>
+</html>

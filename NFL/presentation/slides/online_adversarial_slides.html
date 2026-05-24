@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Online Adversarial No-Free-Lunch — Slides</title>
+
+  <!-- KaTeX -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {
+      delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '\\[', right: '\\]', display: true},
+        {left: '$', right: '$', display: false},
+        {left: '\\(', right: '\\)', display: false}
+      ]
+    });"></script>
+
+  <style>
+    /* ── Reset & Base ───────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary:   #2D5172;
+      --teal:      #2E7D6F;
+      --red:       #C04040;
+      --gold:      #B08020;
+      --body-text: #2D3A4A;
+      --bg:        #FFFFFF;
+      --box-bg:    #F2F4F7;
+      --rule:      #C0C8D0;
+      --slide-w:   900px;
+      --slide-h:   506px;   /* 16:9 */
+    }
+
+    html, body {
+      background: #d0d4da;
+      font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+      color: var(--body-text);
+    }
+
+    /* ── Slide container ───────────────────────────────────────────────── */
+    .deck {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem 4rem;
+      gap: 1.5rem;
+    }
+
+    .slide {
+      width: var(--slide-w);
+      height: var(--slide-h);
+      background: var(--bg);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.22);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header bar ────────────────────────────────────────────────────── */
+    .slide-header {
+      background: var(--primary);
+      color: #fff;
+      padding: 0 2rem;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      font-size: 1.01rem;
+      font-weight: normal;
+      flex-shrink: 0;
+      letter-spacing: 0.01em;
+    }
+
+    /* ── Content area ──────────────────────────────────────────────────── */
+    .slide-body {
+      flex: 1;
+      padding: 1.5rem 2.3rem 1.1rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      overflow: hidden;
+      font-size: 0.97rem;
+      line-height: 1.58;
+    }
+
+    /* ── Bottom accent bar ─────────────────────────────────────────────── */
+    .slide-footer {
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      flex-shrink: 0;
+    }
+    .footer-accent {
+      width: 64px;
+      height: 4px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+    .slide-num {
+      font-size: 0.75rem;
+      color: #888;
+      font-family: "Palatino Linotype", Georgia, serif;
+    }
+
+    /* ── Cover slide ───────────────────────────────────────────────────── */
+    .slide.cover { justify-content: flex-end; }
+    .slide.cover .cover-inner {
+      padding: 0 2.3rem 1.8rem;
+    }
+    .cover-title {
+      font-size: 1.9rem;
+      color: var(--primary);
+      font-weight: normal;
+      line-height: 1.25;
+      margin-bottom: 0.3rem;
+    }
+    .cover-subtitle {
+      font-size: 1.1rem;
+      color: var(--teal);
+      font-style: italic;
+      margin-bottom: 0.9rem;
+    }
+    .cover-rule {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin-bottom: 0.75rem;
+    }
+    .cover-meta {
+      font-size: 0.82rem;
+      color: #666;
+      line-height: 1.7;
+    }
+    .cover-meta .author { font-size: 0.95rem; color: var(--primary); }
+    .cover-meta .email  { font-family: "Courier New", monospace; font-size: 0.80rem; color: #888; }
+
+    /* ── Section divider slide ─────────────────────────────────────────── */
+    .slide.section-div { justify-content: flex-end; }
+    .section-div .sec-inner {
+      padding: 0 2.3rem 2.2rem;
+    }
+    .sec-title {
+      font-size: 1.7rem;
+      color: var(--primary);
+      font-weight: bold;
+      margin-bottom: 0.6rem;
+    }
+    .sec-rule {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+    .sec-rule-thick {
+      width: 72px;
+      height: 4px;
+      background: var(--primary);
+    }
+    .sec-rule-thin {
+      flex: 1;
+      height: 1.5px;
+      background: var(--rule);
+    }
+
+    /* ── Typography inside slides ──────────────────────────────────────── */
+    .slide h3 {
+      font-size: 1.0rem;
+      color: var(--primary);
+      font-weight: bold;
+      margin: 0.55rem 0 0.25rem;
+    }
+    .slide p { margin: 0.3rem 0; }
+    .slide ul, .slide ol {
+      padding-left: 1.55rem;
+      margin: 0.25rem 0;
+    }
+    .slide li { margin: 0.18rem 0; }
+
+    /* ── Theorem / definition boxes ────────────────────────────────────── */
+    .box {
+      background: var(--box-bg);
+      border-radius: 4px;
+      padding: 0.65rem 1rem;
+      margin: 0.4rem 0;
+    }
+    .box.thm  { border-left: 4px solid var(--primary); }
+    .box.def  { border-left: 4px solid var(--teal); }
+    .box.lem  { border-left: 4px solid #4a7aab; }
+    .box.rmk  { border-left: 4px solid var(--gold); background: #faf7ee; }
+    .box.take { border-left: 4px solid var(--teal); background: #eef6f4;
+                color: var(--teal); font-style: italic; }
+    .box-label {
+      font-weight: bold;
+      color: inherit;
+      margin-right: 0.3em;
+    }
+    .box.thm  .box-label { color: var(--primary); }
+    .box.def  .box-label { color: var(--teal); }
+    .box.lem  .box-label { color: #4a7aab; }
+    .box.rmk  .box-label { color: var(--gold); }
+
+    /* ── Step labels ───────────────────────────────────────────────────── */
+    .step-label {
+      font-weight: bold;
+      color: var(--primary);
+    }
+
+    /* ── Inline code ───────────────────────────────────────────────────── */
+    code {
+      font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+      font-size: 0.82em;
+      background: #eef0f3;
+      padding: 0.08em 0.3em;
+      border-radius: 3px;
+      color: var(--red);
+    }
+
+    /* Lean code block */
+    pre.lean {
+      font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+      font-size: 0.76rem;
+      background: #1e1e2e;
+      color: #cdd6f4;
+      padding: 0.7rem 1rem;
+      border-radius: 5px;
+      overflow-x: auto;
+      line-height: 1.5;
+      margin: 0.4rem 0;
+    }
+    pre.lean .kw  { color: #cba6f7; }
+    pre.lean .fn  { color: #89b4fa; }
+    pre.lean .cm  { color: #6c7086; font-style: italic; }
+    pre.lean .st  { color: #a6e3a1; }
+    pre.lean .ty  { color: #94e2d5; }
+
+    /* ── Two-column helper ─────────────────────────────────────────────── */
+    .cols { display: flex; gap: 1.2rem; align-items: flex-start; }
+    .col  { flex: 1; }
+
+    /* ── Highlight colors ──────────────────────────────────────────────── */
+    .hl-blue  { color: var(--primary); font-weight: bold; }
+    .hl-teal  { color: var(--teal); }
+    .hl-red   { color: var(--red); }
+    .hl-gold  { color: var(--gold); }
+
+    /* ── Slide counter helper ──────────────────────────────────────────── */
+    .slide { counter-increment: slide-counter; }
+  </style>
+</head>
+<body>
+<div class="deck">
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     SLIDE 1 — COVER
+═══════════════════════════════════════════════════════════════════════ -->
+<div class="slide cover">
+  <div class="cover-inner">
+    <div class="cover-title">Online Adversarial<br>No-Free-Lunch Theorem</div>
+    <div class="cover-subtitle">No deterministic learner survives an adaptive adversary</div>
+    <hr class="cover-rule" />
+    <div class="cover-meta">
+      <div class="author">Tianhao Wang</div>
+      <div class="email">tianhaowang@ucsd.edu</div>
+      <div>UCSD · Spring 2026 &nbsp;·&nbsp; DSC 190/291 Topics: Learning Theory</div>
+    </div>
+  </div>
+  <div class="slide-footer">
+    <div class="footer-accent"></div>
+    <div class="slide-num">1</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     SLIDE 2 — SECTION: Setting
+═══════════════════════════════════════════════════════════════════════ -->
+<div class="slide section-div">
+  <div class="sec-inner">
+    <div class="sec-title">1. Setting</div>
+    <div class="sec-rule">
+      <div class="sec-rule-thick"></div>
+      <div class="sec-rule-thin"></div>
+    </div>
+  </div>
+  <div class="slide-footer">
+    <div class="footer-accent"></div>
+    <div class="slide-num">2</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     SLIDE 3 — Online learning setup
+═══════════════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-header">Setting: Online Learning</div>
+  <div class="slide-body">
+    <p>Learning proceeds in <strong>rounds</strong>. At each round:</p>
+    <ol style="margin: 0.5rem 0 0.6rem;">
+      <li>Adversary selects a query $x_t \in \mathcal{X}$</li>
+      <li>Learner predicts $\hat{y}_t \in \{0,1\}$ <em>before</em> seeing the true label</li>
+      <li>Adversary reveals label $y_t = f(x_t)$; learner suffers if $\hat{y}_t \neq y_t$</li>
+    </ol>
+
+    <div class="box def">
+      <span class="box-label">Definition.</span>
+      A <strong>deterministic online learner</strong> is a map
+      $$A : \bigl(\mathcal{X} \times \{0,1\}\bigr)^* \times \mathcal{X} \;\longrightarrow\; \{0,1\}$$
+      that produces a prediction given the <em>labelled history</em> and the current query.
+    </div>
+
+    <div class="box def" style="margin-top:0.5rem;">
+      <span class="box-label">Definition.</span>
+      A query sequence $\mathbf{x} = (x_1, \ldots, x_T)$ is <strong>non-repeating</strong>
+      if all queries are distinct.
+    </div>
+
+    <p style="margin-top:0.5rem;">
+      Write $h_t = \bigl((x_1, f(x_1)), \ldots, (x_{t-1}, f(x_{t-1}))\bigr)$ for the
+      <strong>history at round $t$</strong>.
+    </p>
+  </div>
+  <div class="slide-footer">
+    <div class="footer-accent"></div>
+    <div class="slide-num">3</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     SLIDE 4 — Mistake definition
+═══════════════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-header">Mistakes and the Adversarial Goal</div>
+  <div class="slide-body">
+    <div class="box def">
+      <span class="box-label">Definition</span> (Mistake at round $t$).
+      Learner $A$ <strong>makes a mistake at round $t$</strong> against target $f$ on
+      sequence $\mathbf{x}$ if
+      $$A(h_t,\, x_t) \;\neq\; f(x_t).$$
+    </div>
+
+    <p style="margin-top:0.7rem;"><strong>Goal of the adversary:</strong> choose $f$ so that $A$ makes a mistake at <em>every</em> round.</p>
+
+    <p><strong>Goal of the learner:</strong> choose a strategy $A$ so that no target $f$ causes mistakes at every round.</p>
+
+    <div class="box take" style="margin-top:0.7rem;">
+      <span class="box-label">Question.</span>
+      Can a deterministic learner guarantee that no adversary fools it on
+      every round of a non-repeating sequence?
+    </div>
+
+    <p style="margin-top:0.5rem; color:var(--red); font-weight:bold;">
+      Answer: No. This is the Online Adversarial No-Free-Lunch Theorem.
+    </p>
+  </div>
+  <div class="slide-footer">
+    <div class="footer-accent"></div>
+    <div class="slide-num">4</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     SLIDE 5 — SECTION: Theorem
+═══════════════════════════════════════════════════════════════════════ -->
+<div class="slide section-div">
+  <div class="sec-inner">
+    <div class="sec-title">2. Main Theorem</div>
+    <div class="sec-rule">
+      <div class="sec-rule-thick"></div>
+      <div class="sec-rule-thin"></div>
+    </div>
+  </div>
+  <div class="slide-footer">
+    <div class="footer-accent"></div>
+    <div class="slide-num">5</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     SLIDE 6 — Main theorem statement
+═══════════════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-header">Online Adversarial No-Free-Lunch</div>
+  <div class="slide-body">
+    <div class="box thm">
+      <span class="box-label">Theorem</span> (Online Adversarial NFL).
+      <em>For any deterministic online learner $A$ and any non-repeating query sequence
+      $\mathbf{x} = (x_1, \ldots, x_T)$, there exists a target
+      $f : \mathcal{X} \to \{0,1\}$ such that</em>
+      $$\forall\, t \in \{1,\ldots, T\},\quad A(h_t,\, x_t) \;\neq\; f(x_t).$$
+    </div>
+
+    <p style="margin-top:0.8rem;"><strong>In words:</strong> for every learner and every non-repeating query schedule,
+    some target makes the learner wrong at <em>every single round</em>.</p>
+
+    <ul style="margin-top:0.5rem;">
+      <li>The result is <span class="hl-red">worst-case</span>: the target $f$ may depend on $A$ and $\mathbf{x}$.</li>
+      <li>The construction is <span class="hl-blue">explicit</span>: no probabilistic argument needed.</li>
+      <li>Proof method: <span class="hl-teal">induction on the query sequence</span>.</li>
+    </ul>
+
+    <div class="box take" style="margin-top:0.7rem;">
+      There is <strong>no free lunch</strong>: every online learner can be fooled completely
+      by an adaptive adversary.
+    </div>
+  </div>
+  <div class="slide-footer">
+    <div class="footer-accent"></div>
+    <div class="slide-num">6</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     SLIDE 7 — SECTION: Proof
+═══════════════════════════════════════════════════════════════════════ -->
+<div class="slide section-div">
+  <div class="sec-inner">
+    <div class="sec-title">3. Proof</div>
+    <div class="sec-rule">
+      <div class="sec-rule-thick"></div>
+      <div class="sec-rule-thin"></div>
+    </div>
+  </div>
+  <div class="slide-footer">
+    <div class="footer-accent"></div>
+    <div class="slide-num">7</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     SLIDE 8 — Proof overview
+═══════════════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-header">Proof Overview</div>
+  <div class="slide-body">
+    <p>We prove by <strong>induction on $|\mathbf{x}|$</strong>:</p>
+    <p style="margin: 0.35rem 0 0.6rem; padding-left:1rem; font-style:italic;">
+      For every learner $A$ and non-repeating $\mathbf{x}$, $\exists f$ that fools $A$ everywhere.
+    </p>
+
+    <div class="cols">
+      <div class="col">
+        <h3>Base case</h3>
+        <p>$\mathbf{x} = ()$. No rounds exist. Any $f$ works vacuously.</p>
+
+        <h3 style="margin-top:0.8rem;">Inductive step</h3>
+        <p>Given $\mathbf{x} = (x_1, x_2, \ldots, x_T)$ with $x_1 \notin \{x_2,\ldots,x_T\}$, we build $f$ in <strong>4 steps</strong>:</p>
+        <ol style="margin-top:0.3rem;">
+          <li><span class="hl-blue">Adversarial label</span> $b$ for round 1</li>
+          <li><span class="hl-blue">Shifted learner</span> $A'$ for the tail</li>
+          <li><span class="hl-teal">Inductive hypothesis</span> on $A'$, $(x_2,\ldots,x_T)$</li>
+          <li><span class="hl-blue">Combined target</span> $f$</li>
+        </ol>
+      </div>
+      <div class="col">
+        <div class="box rmk">
+          <span class="box-label">Key idea.</span>
+          Fool the learner on round 1 immediately, then
+          <em>pretend round 1 already happened</em>
+          to reduce to a fresh $(T{-}1)$-round problem.
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer">
+    <div class="footer-accent"></div>
+    <div class="slide-num">8</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     SLIDE 9 — Steps 1 & 2
+═══════════════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-header">Construction — Steps 1 &amp; 2</div>
+  <div class="slide-body">
+    <p><span class="step-label">Step 1.</span> <strong>Adversarial label for round 1.</strong></p>
+    <p style="margin-left:1.3rem;">
+      Set $\;b \;:=\; \lnot\, A([\,], x_1).$
+    </p>
+    <p style="margin-left:1.3rem; font-size:0.93rem; color:#555;">
+      Since $A$'s prediction on empty history is $A([], x_1)$, the <em>opposite</em> $b$
+      fools $A$ at round 1 for any target with $f(x_1) = b$.
+    </p>
+
+    <p style="margin-top:0.8rem;"><span class="step-label">Step 2.</span> <strong>Shifted learner.</strong></p>
+    <p style="margin-left:1.3rem;">
+      Define $A' : (\mathcal{X}\times\{0,1\})^* \times \mathcal{X} \to \{0,1\}$ by
+      $$A'(h,\, y) \;:=\; A\!\bigl(\,(x_1, b) :: h,\; y\,\bigr).$$
+    </p>
+    <p style="margin-left:1.3rem; font-size:0.93rem; color:#555;">
+      $A'$ simulates $A$ as if round 1 already happened with history entry $(x_1, b)$.
+      It is again a valid deterministic online learner.
+    </p>
+
+    <div class="box rmk" style="margin-top:0.6rem;">
+      <span class="box-label">Intuition.</span>
+      Prepending $(x_1, b)$ to every future history is the "shift":
+      it moves $A$ one step forward in time, so that the tail problem starts fresh.
+    </div>
+  </div>
+  <div class="slide-footer">
+    <div class="footer-accent"></div>
+    <div class="slide-num">9</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     SLIDE 10 — Steps 3 & 4
+═══════════════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-header">Construction — Steps 3 &amp; 4</div>
+  <div class="slide-body">
+    <p><span class="step-label">Step 3.</span> <strong>Apply the inductive hypothesis.</strong></p>
+    <p style="margin-left:1.3rem; font-size:0.93rem;">
+      The tail $(x_2, \ldots, x_T)$ is non-repeating (inherited from $\mathbf{x}$).
+      By IH applied to $A'$ and $(x_2,\ldots,x_T)$:
+      $$\exists\; g : \mathcal{X}\to\{0,1\} \quad \text{s.t.} \quad
+        \forall t\in\{1,\ldots,T{-}1\},\quad
+        A'\!\bigl(h'_t,\, x_{t+1}\bigr) \;\neq\; g(x_{t+1}),$$
+      where $h'_t = \mathrm{hist}(g, (x_2,\ldots,x_T), t)$.
+    </p>
+
+    <p style="margin-top:0.7rem;"><span class="step-label">Step 4.</span> <strong>Combined target.</strong></p>
+    <p style="margin-left:1.3rem;">
+      $$f(y) \;=\; \begin{cases} b & y = x_1 \\ g(y) & y \neq x_1 \end{cases}$$
+    </p>
+    <p style="margin-left:1.3rem; font-size:0.93rem; color:#555;">
+      Since $x_1 \notin \{x_2,\ldots,x_T\}$, the two cases never conflict.
+    </p>
+
+    <div class="box take" style="margin-top:0.5rem;">
+      $f$ is well-defined. It remains to verify: $A$ makes a mistake at every round.
+    </div>
+  </div>
+  <div class="slide-footer">
+    <div class="footer-accent"></div>
+    <div class="slide-num">10</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     SLIDE 11 — Verification: round 1
+═══════════════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-header">Verification — Round 1</div>
+  <div class="slide-body">
+    <p><strong>Claim:</strong> $A(h_1, x_1) \neq f(x_1)$.</p>
+
+    <p style="margin-top:0.6rem;"><strong>Proof:</strong></p>
+    <ul style="margin-top:0.3rem;">
+      <li>$h_1 = [\,]$ (empty history at round 1).</li>
+      <li>$f(x_1) = b = \lnot A([\,], x_1)$ by definition of $b$.</li>
+      <li>Therefore $A([\,], x_1) \neq \lnot A([\,], x_1) = f(x_1)$. $\checkmark$</li>
+    </ul>
+
+    <div class="box lem" style="margin-top:0.8rem;">
+      <span class="box-label">Lemma</span> (History agreement).
+      For all $t \geq 1$,
+      $$h_{t+1} \;=\; \mathrm{hist}(f, \mathbf{x}, t+1)
+                 \;=\; (x_1, b) \mathbin{::} \mathrm{hist}(g, (x_2,\ldots,x_T), t).$$
+    </div>
+
+    <p style="font-size:0.90rem; color:#555; margin-top:0.4rem;">
+      <em>Why?</em> The first pair is $(x_1, f(x_1)) = (x_1, b)$.
+      For $i \geq 2$: $x_i \neq x_1$ (non-repeating), so $f(x_i) = g(x_i)$.
+      Hence the tail of the history is $\mathrm{hist}(g, (x_2,\ldots,x_T), t)$.
+    </p>
+  </div>
+  <div class="slide-footer">
+    <div class="footer-accent"></div>
+    <div class="slide-num">11</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     SLIDE 12 — Verification: round t+1
+═══════════════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-header">Verification — Round $t+1$</div>
+  <div class="slide-body">
+    <p><strong>Claim:</strong> $A(h_{t+1}, x_{t+1}) \neq f(x_{t+1})$ for each $t \geq 1$.</p>
+
+    <p style="margin-top:0.5rem;"><strong>Proof:</strong></p>
+    <ol style="margin-top:0.3rem; font-size:0.95rem;">
+      <li>
+        By the History Agreement Lemma:
+        $h_{t+1} = (x_1, b) :: \mathrm{hist}(g, (x_2,\ldots,x_T), t).$
+      </li>
+      <li>
+        So $A(h_{t+1}, x_{t+1})
+           = A\!\bigl((x_1,b) :: \mathrm{hist}(g,(x_2,\ldots,x_T),t),\; x_{t+1}\bigr)
+           = A'(\mathrm{hist}(g,(x_2,\ldots,x_T),t),\; x_{t+1}).$
+      </li>
+      <li>
+        Since $x_{t+1} \neq x_1$ (non-repeating): $f(x_{t+1}) = g(x_{t+1}).$
+      </li>
+      <li>
+        By the inductive hypothesis on $g$:
+        $A'(\mathrm{hist}(g,(x_2,\ldots,x_T),t),\; x_{t+1}) \neq g(x_{t+1}) = f(x_{t+1}).$ $\checkmark$
+      </li>
+    </ol>
+
+    <div class="box take" style="margin-top:0.7rem;">
+      $f$ makes $A$ err at <em>every</em> round $t \in \{1,\ldots,T\}$. <strong>QED.</strong>
+    </div>
+  </div>
+  <div class="slide-footer">
+    <div class="footer-accent"></div>
+    <div class="slide-num">12</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     SLIDE 13 — SECTION: Lean formalization
+═══════════════════════════════════════════════════════════════════════ -->
+<div class="slide section-div">
+  <div class="sec-inner">
+    <div class="sec-title">4. Lean 4 Formalization</div>
+    <div class="sec-rule">
+      <div class="sec-rule-thick"></div>
+      <div class="sec-rule-thin"></div>
+    </div>
+  </div>
+  <div class="slide-footer">
+    <div class="footer-accent"></div>
+    <div class="slide-num">13</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     SLIDE 14 — Lean definitions
+═══════════════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-header">Lean 4 — Definitions</div>
+  <div class="slide-body">
+<pre class="lean"><span class="cm">-- Online learner: history → query → prediction</span>
+<span class="kw">abbrev</span> <span class="fn">OnlineLearner</span> (X : <span class="ty">Type</span>*) :=
+  <span class="ty">List</span> (X × <span class="ty">Bool</span>) → X → <span class="ty">Bool</span>
+
+<span class="cm">-- History seen before round t against target f</span>
+<span class="kw">def</span> <span class="fn">historyTo</span> (f : X → <span class="ty">Bool</span>) (xs : <span class="ty">List</span> X) (t : <span class="ty">Nat</span>) :
+    <span class="ty">List</span> (X × <span class="ty">Bool</span>) :=
+  (xs.take t).map (<span class="kw">fun</span> x => (x, f x))
+
+<span class="cm">-- Mistake at round t</span>
+<span class="kw">def</span> <span class="fn">MistakeAt</span> (A : <span class="fn">OnlineLearner</span> X) (f : X → <span class="ty">Bool</span>)
+    (xs : <span class="ty">List</span> X) (t : <span class="ty">Nat</span>) : <span class="ty">Prop</span> :=
+  ∀ h : t < xs.length,
+    A (<span class="fn">historyTo</span> f xs t) (xs.get ⟨t, h⟩) ≠ f (xs.get ⟨t, h⟩)</pre>
+
+    <p style="margin-top:0.4rem; font-size:0.88rem; color:#555;">
+      The history is the prefix of length $t$, mapped to labelled pairs.
+      <code>MistakeAt</code> is universally quantified over the bound proof so the
+      statement is well-typed for all $t$ simultaneously.
+    </p>
+  </div>
+  <div class="slide-footer">
+    <div class="footer-accent"></div>
+    <div class="slide-num">14</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     SLIDE 15 — Lean theorem and proof sketch
+═══════════════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-header">Lean 4 — Theorem &amp; Proof Sketch</div>
+  <div class="slide-body">
+<pre class="lean"><span class="kw">theorem</span> <span class="fn">exists_adversarial_target</span>
+    (A : <span class="fn">OnlineLearner</span> X) (xs : <span class="ty">List</span> X) (hxs : xs.Nodup) :
+    ∃ f : X → <span class="ty">Bool</span>, ∀ t, <span class="fn">MistakeAt</span> A f xs t := <span class="kw">by</span>
+  induction xs generalizing A <span class="kw">with</span>
+  | nil =>   <span class="cm">-- vacuous</span>
+      exact ⟨<span class="kw">fun</span> _ => <span class="st">false</span>, <span class="kw">fun</span> t h => absurd h (by simp)⟩
+  | cons x xs ih =>
+      <span class="kw">let</span> b  := !A [] x                            <span class="cm">-- adversarial label</span>
+      <span class="kw">let</span> A' := <span class="kw">fun</span> h y => A ((x, b) :: h) y       <span class="cm">-- shifted learner</span>
+      obtain ⟨g, hg⟩ := ih A' (nodup_tail hxs)     <span class="cm">-- IH on tail</span>
+      <span class="kw">let</span> f  := <span class="kw">fun</span> y => <span class="kw">if</span> y = x <span class="kw">then</span> b <span class="kw">else</span> g y <span class="cm">-- combined target</span>
+      refine ⟨f, <span class="kw">fun</span> t => ?_⟩
+      cases t <span class="kw">with</span>
+      | zero  => dsimp [historyTo, f, b]; cases A [] x &lt;;&gt; simp
+      | succ t => simpa [A', f, hget_ne'] using hg t ht'</pre>
+
+    <div class="box take" style="margin-top:0.35rem;">
+      <code>#print axioms exists_adversarial_target</code> outputs only
+      <code>propext, Classical.choice, Quot.sound</code> — the standard Lean/Mathlib axioms.
+      No <code>sorry</code>.
+    </div>
+  </div>
+  <div class="slide-footer">
+    <div class="footer-accent"></div>
+    <div class="slide-num">15</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     SLIDE 16 — Discussion
+═══════════════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-header">Discussion &amp; Takeaways</div>
+  <div class="slide-body">
+    <div class="cols">
+      <div class="col">
+        <h3>What the theorem says</h3>
+        <ul>
+          <li>Every deterministic online learner can be <span class="hl-red">completely fooled</span> by an adaptive adversary.</li>
+          <li>The adversary constructs $f$ <em>greedily</em>: one coordinate at a time.</li>
+          <li>The query sequence can be arbitrary (any non-repeating order).</li>
+        </ul>
+
+        <h3 style="margin-top:0.7rem;">Why non-repeating?</h3>
+        <ul>
+          <li>Needed to ensure $x_1 \notin \{x_2,\ldots,x_T\}$ for the history lemma.</li>
+          <li>With repeats, $A$ already knows the label and cannot be fooled on a repeat.</li>
+        </ul>
+      </div>
+      <div class="col">
+        <h3>Relation to PAC learning</h3>
+        <ul>
+          <li>In PAC learning, the target is <em>fixed before</em> the learner runs — adversarial adaptation is not allowed.</li>
+          <li>This theorem shows <span class="hl-teal">why the adversarial model is strictly harder</span>.</li>
+        </ul>
+
+        <div class="box rmk" style="margin-top:0.7rem;">
+          <span class="box-label">Note.</span>
+          The proof is <strong>constructive</strong>: the adversary's strategy is a simple
+          recursive algorithm with one evaluation of $A$ per round.
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer">
+    <div class="footer-accent"></div>
+    <div class="slide-num">16</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     SLIDE 17 — Summary
+═══════════════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="slide-header">Summary</div>
+  <div class="slide-body">
+    <div class="box thm" style="margin-bottom:0.7rem;">
+      <span class="box-label">Theorem</span> (Online Adversarial NFL, restated).
+      $\;\forall A,\;\forall$ non-repeating $\mathbf{x}$,
+      $\;\exists f : \mathcal{X}\to\{0,1\}$ such that $A$ errs at every round.
+    </div>
+
+    <p><strong>Proof method:</strong> Induction on $|\mathbf{x}|$.</p>
+
+    <ul style="margin-top:0.4rem;">
+      <li><strong>Base:</strong> empty sequence — vacuous.</li>
+      <li><strong>Step:</strong>
+        <ol style="margin-top:0.2rem;">
+          <li>Set $b = \lnot A([], x_1)$ (fool round 1).</li>
+          <li>Build shifted learner $A'(h,y) = A((x_1,b)::h,\,y)$.</li>
+          <li>Apply IH to $A'$ on $(x_2,\ldots,x_T)$ to get $g$.</li>
+          <li>Set $f(y) = b$ if $y=x_1$, else $g(y)$.</li>
+        </ol>
+      </li>
+    </ul>
+
+    <div class="box take" style="margin-top:0.7rem;">
+      <strong>There is no free lunch for online deterministic learners against adaptive adversaries.</strong>
+    </div>
+
+    <p style="margin-top:0.5rem; font-size:0.85rem; color:#888;">
+      Machine-verified in Lean 4 / Mathlib. Axioms: <code>propext</code>, <code>Classical.choice</code>, <code>Quot.sound</code>.
+    </p>
+  </div>
+  <div class="slide-footer">
+    <div class="footer-accent"></div>
+    <div class="slide-num">17</div>
+  </div>
+</div>
+
+</div><!-- .deck -->
+</body>
+</html>

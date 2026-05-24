@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wolpert–Macready No-Free-Lunch — Slides</title>
+
+  <!-- KaTeX -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {
+      delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '\\[', right: '\\]', display: true},
+        {left: '$', right: '$', display: false},
+        {left: '\\(', right: '\\)', display: false}
+      ]
+    });"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary:   #2D5172;
+      --teal:      #2E7D6F;
+      --red:       #C04040;
+      --gold:      #B08020;
+      --body-text: #2D3A4A;
+      --bg:        #FFFFFF;
+      --box-bg:    #F2F4F7;
+      --rule:      #C0C8D0;
+      --slide-w:   900px;
+      --slide-h:   506px;
+    }
+
+    html, body {
+      background: #d0d4da;
+      font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+      color: var(--body-text);
+    }
+
+    .deck {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem 4rem;
+      gap: 1.5rem;
+    }
+
+    .slide {
+      width: var(--slide-w);
+      height: var(--slide-h);
+      background: var(--bg);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.22);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .slide-header {
+      background: var(--primary);
+      color: #fff;
+      padding: 0 2rem;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      font-size: 1.01rem;
+      font-weight: normal;
+      flex-shrink: 0;
+      letter-spacing: 0.01em;
+    }
+
+    .slide-body {
+      flex: 1;
+      padding: 1.5rem 2.3rem 1.1rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      overflow: hidden;
+      font-size: 0.97rem;
+      line-height: 1.58;
+    }
+
+    .slide-footer {
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      flex-shrink: 0;
+    }
+    .footer-accent { width: 64px; height: 5px; background: var(--teal); border-radius: 2px; }
+    .slide-num { font-size: 0.72rem; color: #999; }
+
+    /* Cover */
+    .slide.cover .slide-body { justify-content: center; align-items: flex-start; gap: 0.5rem; }
+    .cover-tag { font-size: 0.82rem; color: var(--teal); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 0.4rem; }
+    .cover-title { font-size: 2.1rem; color: var(--primary); font-weight: normal; line-height: 1.2; margin-bottom: 0.5rem; }
+    .cover-sub { font-size: 1.05rem; color: #556; font-style: italic; }
+    .cover-meta { font-size: 0.83rem; color: #888; margin-top: 1.5rem; }
+
+    /* Section divider */
+    .slide.section-divider .slide-body { justify-content: center; background: var(--primary); }
+    .slide.section-divider .slide-header { background: #1e3a55; }
+    .slide.section-divider .slide-footer { background: var(--primary); }
+    .section-label { font-size: 0.85rem; color: rgba(255,255,255,0.55); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .section-title { font-size: 2rem; color: #fff; font-weight: normal; }
+
+    /* Boxes */
+    .box { background: var(--box-bg); border-radius: 4px; padding: 0.7rem 1rem; margin: 0.4rem 0; font-size: 0.91rem; }
+    .box.theorem   { border-left: 4px solid var(--primary); }
+    .box.definition { border-left: 4px solid var(--teal); }
+    .box.lemma     { border-left: 4px solid #4a7aab; }
+    .box.remark    { border-left: 4px solid var(--gold); background: #faf6ec; }
+    .box.key       { border-left: 4px solid var(--red); background: #fdf2f2; }
+    .box-label { font-weight: bold; color: var(--primary); margin-right: 0.3em; font-size: 0.87rem; }
+    .box.definition .box-label { color: var(--teal); }
+    .box.lemma .box-label { color: #4a7aab; }
+    .box.remark .box-label { color: var(--gold); }
+    .box.key .box-label { color: var(--red); }
+
+    h2.slide-title { font-size: 1.32rem; color: var(--primary); font-weight: bold; margin-bottom: 0.7rem; }
+    p { margin: 0.3rem 0; }
+    ul, ol { padding-left: 1.5rem; margin: 0.3rem 0; }
+    li { margin: 0.2rem 0; }
+    strong { color: var(--primary); }
+
+    .takeaway {
+      background: #eef6f4;
+      border-left: 4px solid var(--teal);
+      padding: 0.5rem 1rem;
+      margin: 0.5rem 0;
+      color: var(--teal);
+      font-style: italic;
+      border-radius: 0 4px 4px 0;
+      font-size: 0.9rem;
+    }
+    .takeaway strong { font-style: normal; color: var(--teal); }
+
+    pre.lean {
+      font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+      font-size: 0.74rem;
+      background: #1e1e2e;
+      color: #cdd6f4;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      line-height: 1.46;
+      margin: 0.35rem 0;
+    }
+    pre.lean .kw  { color: #cba6f7; }
+    pre.lean .fn  { color: #89b4fa; }
+    pre.lean .cm  { color: #585b70; font-style: italic; }
+    pre.lean .st  { color: #a6e3a1; }
+    pre.lean .num { color: #fab387; }
+    pre.lean .ty  { color: #94e2d5; }
+
+    .cols { display: flex; gap: 1.2rem; align-items: flex-start; }
+    .col  { flex: 1; }
+
+    .step-list { list-style: none; padding: 0; }
+    .step-list li { display: flex; gap: 0.65rem; align-items: flex-start; margin: 0.35rem 0; }
+    .step-num {
+      background: var(--primary); color: #fff; border-radius: 50%;
+      width: 1.35rem; height: 1.35rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.73rem; flex-shrink: 0; margin-top: 0.1rem;
+    }
+
+    /* Four-object grid on one slide */
+    .obj-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; margin-top: 0.4rem; }
+    .obj-card { background: var(--box-bg); border-left: 3px solid var(--teal); border-radius: 3px; padding: 0.55rem 0.8rem; font-size: 0.88rem; }
+    .obj-name { font-weight: bold; color: var(--teal); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem; }
+  </style>
+</head>
+<body>
+<div class="deck">
+
+  <!-- ══ SLIDE 1: Cover ════════════════════════════════════════════════ -->
+  <div class="slide cover">
+    <div class="slide-header">DSC 190/291 &nbsp;·&nbsp; No-Free-Lunch Theorems</div>
+    <div class="slide-body">
+      <div class="cover-tag">No-Free-Lunch Theorems</div>
+      <div class="cover-title">Wolpert–Macready<br>No-Free-Lunch</div>
+      <div class="cover-sub">Every black-box optimiser is equal — on average</div>
+      <div class="cover-meta">
+        DSC 190/291 Learning Theory &nbsp;·&nbsp; Tianhao Wang &nbsp;·&nbsp; UCSD Spring 2026<br>
+        Based on Wolpert &amp; Macready (1997)
+      </div>
+    </div>
+    <div class="slide-footer"><div class="footer-accent"></div><span class="slide-num">1</span></div>
+  </div>
+
+  <!-- ══ SLIDE 2: Hook ════════════════════════════════════════════════ -->
+  <div class="slide">
+    <div class="slide-header">Motivation</div>
+    <div class="slide-body">
+      <h2 class="slide-title">Which is better — simulated annealing or random search?</h2>
+
+      <p style="font-size:1.1rem;margin:1rem 0 0.5rem;color:var(--red)"><em>Trick question.</em></p>
+
+      <p>
+        Hill climbing, simulated annealing, evolutionary algorithms, and uniform
+        random search are <strong>indistinguishable on average</strong>
+        over all cost functions.
+      </p>
+
+      <p style="margin-top:0.6rem">
+        Any algorithm's gain on one class of problems is exactly offset
+        by losses elsewhere.
+      </p>
+
+      <div class="takeaway" style="margin-top:0.9rem">
+        <strong>NFL:</strong>
+        The "skill" of a real-world optimiser is not intrinsic — it is an alignment
+        between the algorithm's inductive bias and the (non-uniform) prior $P(f)$
+        over problems actually encountered.
+      </div>
+    </div>
+    <div class="slide-footer"><div class="footer-accent"></div><span class="slide-num">2</span></div>
+  </div>
+
+  <!-- ══ SLIDE 3: Section — Setting ══════════════════════════════════ -->
+  <div class="slide section-divider">
+    <div class="slide-header">Wolpert–Macready No-Free-Lunch</div>
+    <div class="slide-body">
+      <div class="section-label">Part I</div>
+      <div class="section-title">The Framework</div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-accent" style="background:rgba(255,255,255,0.3)"></div>
+      <span class="slide-num" style="color:rgba(255,255,255,0.4)">3</span>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 4: Four Objects ════════════════════════════════════════ -->
+  <div class="slide">
+    <div class="slide-header">Framework — Four Objects</div>
+    <div class="slide-body">
+      <h2 class="slide-title">Four Objects Do All the Work</h2>
+
+      <div class="obj-grid">
+        <div class="obj-card">
+          <div class="obj-name">1 — Sample</div>
+          $d_m = \{(x_1,y_1),\ldots,(x_m,y_m)\}$
+          — time-ordered, <strong>distinct</strong> queries.<br>
+          $d_m^x$ = query sequence, $\;d_m^y$ = cost-value sequence.
+        </div>
+        <div class="obj-card">
+          <div class="obj-name">2 — Algorithm</div>
+          $a : d \mapsto x \notin d^x$<br>
+          — maps current sample to next <em>unvisited</em> query.<br>
+          Covers SA, GA, hill climbing, tabu search.
+        </div>
+        <div class="obj-card">
+          <div class="obj-name">3 — Performance</div>
+          $P(d_m^y \mid f, m, a)$<br>
+          — probability algorithm $a$ produces cost-value sequence $d_m^y$
+          on function $f$ after $m$ queries.
+        </div>
+        <div class="obj-card">
+          <div class="obj-name">4 — Prior</div>
+          $P(f)$ over $\mathcal{F} = \mathcal{Y}^{\mathcal{X}}$<br>
+          — $|\mathcal{F}| = |\mathcal{Y}|^{|\mathcal{X}|}$ elements.<br>
+          Uniform prior = complete ignorance about $f$.
+        </div>
+      </div>
+
+      <p style="margin-top:0.6rem;font-size:0.9rem">
+        <strong>Any scalar performance measure</strong>
+        $\Phi(d_m^y)$ (best-so-far, mean, etc.) is a function of
+        $P(d_m^y \mid f, m, a)$.
+      </p>
+    </div>
+    <div class="slide-footer"><div class="footer-accent"></div><span class="slide-num">4</span></div>
+  </div>
+
+  <!-- ══ SLIDE 5: Section — Theorem ══════════════════════════════════ -->
+  <div class="slide section-divider">
+    <div class="slide-header">Wolpert–Macready No-Free-Lunch</div>
+    <div class="slide-body">
+      <div class="section-label">Part II</div>
+      <div class="section-title">Main Theorem</div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-accent" style="background:rgba(255,255,255,0.3)"></div>
+      <span class="slide-num" style="color:rgba(255,255,255,0.4)">5</span>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 6: Theorem Statement ══════════════════════════════════ -->
+  <div class="slide">
+    <div class="slide-header">Theorem 1 — Static NFL</div>
+    <div class="slide-body">
+      <h2 class="slide-title">Theorem 1 (Wolpert–Macready, 1997)</h2>
+
+      <div class="box theorem">
+        For any two algorithms $a_1, a_2$, any $m$, and any target cost-value sequence $d_m^y$:
+        $$\sum_{f \in \mathcal{F}} P(d_m^y \mid f,\, m,\, a_1)
+          \;=\;
+          \sum_{f \in \mathcal{F}} P(d_m^y \mid f,\, m,\, a_2).$$
+      </div>
+
+      <p style="margin-top:0.6rem"><strong>What it says:</strong>
+        The number of cost functions on which $a$ produces exactly $d_m^y$
+        is the <em>same</em> for every $a$.
+      </p>
+
+      <div class="box theorem" style="margin-top:0.45rem">
+        <span class="box-label">Corollary.</span>
+        For any scalar performance measure $\Phi$:
+        $$\sum_{f} \mathbb{E}_a[\Phi(d_m^y)] \;\text{ is equal for every }a.$$
+      </div>
+
+      <div class="takeaway" style="margin-top:0.55rem">
+        <strong>Takeaway.</strong>
+        Averaged over all cost functions, every non-revisiting algorithm is equivalent.
+        Performance advantage requires — and reveals — prior knowledge about $f$.
+      </div>
+    </div>
+    <div class="slide-footer"><div class="footer-accent"></div><span class="slide-num">6</span></div>
+  </div>
+
+  <!-- ══ SLIDE 7: Section — Proof ════════════════════════════════════ -->
+  <div class="slide section-divider">
+    <div class="slide-header">Wolpert–Macready No-Free-Lunch</div>
+    <div class="slide-body">
+      <div class="section-label">Part III</div>
+      <div class="section-title">Proof</div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-accent" style="background:rgba(255,255,255,0.3)"></div>
+      <span class="slide-num" style="color:rgba(255,255,255,0.4)">7</span>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 8: Base Case ═══════════════════════════════════════════ -->
+  <div class="slide">
+    <div class="slide-header">Proof — Induction on $m$</div>
+    <div class="slide-body">
+      <h2 class="slide-title">Proof by Induction on $m$</h2>
+
+      <div class="box key">
+        <span class="box-label">Core insight.</span>
+        Any algorithm picks coordinates of $f$ in some order.
+        Summing over all $f \in \mathcal{F}$ makes every ordering — and every algorithm — equivalent.
+      </div>
+
+      <p style="margin-top:0.65rem"><strong>Base case ($m = 1$):</strong></p>
+      <ul style="font-size:0.92rem">
+        <li>Algorithm $a$ makes first query $x_1 = a(\emptyset)$.</li>
+        <li>Event "$d_1^y = (y_1)$" requires $f(x_1) = y_1$ — fixes <em>one</em> coordinate of $f$.</li>
+        <li>Remaining $|\mathcal{X}|-1$ coordinates are free:
+            exactly $|\mathcal{Y}|^{|\mathcal{X}|-1}$ functions in $\mathcal{F}$ qualify.</li>
+        <li>This count is <strong>independent of which $x_1$ the algorithm chose</strong>.</li>
+      </ul>
+
+      $$\sum_{f} P(d_1^y \mid f, 1, a) = |\mathcal{Y}|^{|\mathcal{X}|-1}
+        \quad \forall\, a.$$
+    </div>
+    <div class="slide-footer"><div class="footer-accent"></div><span class="slide-num">8</span></div>
+  </div>
+
+  <!-- ══ SLIDE 9: Inductive Step ════════════════════════════════════ -->
+  <div class="slide">
+    <div class="slide-header">Proof — Inductive Step: Inside / Outside Split</div>
+    <div class="slide-body">
+      <h2 class="slide-title">Inductive Step: Inside / Outside Split</h2>
+
+      <p style="font-size:0.91rem">Decompose the probability:</p>
+      $$P(d_{m+1}^y \mid f, m{+}1, a)
+        = \underbrace{P(y_{m+1} \mid d_m^y, f, a)}_{\text{next obs.}}
+          \cdot
+          \underbrace{P(d_m^y \mid f, m, a)}_{\text{history}}$$
+
+      <div class="cols" style="margin-top:0.5rem;gap:1rem">
+        <div class="col">
+          <div class="box definition" style="font-size:0.88rem">
+            <span class="box-label">Inside $d_m^x$.</span>
+            Query $x_{m+1} = a(d_m^x, d_m^y)$ depends only on $f$'s values at
+            points <em>already queried</em>.<br>
+            $\Rightarrow$ "inside" sum = inductive hypothesis
+            $= |\mathcal{Y}|^{|\mathcal{X}|-m}$, independent of $a$.
+          </div>
+        </div>
+        <div class="col">
+          <div class="box key" style="font-size:0.88rem">
+            <span class="box-label">Outside $d_m^x$.</span>
+            New observation $y_{m+1} = f(x_{m+1})$ depends only on $f$'s value
+            at a point <em>outside</em> $d_m^x$ (non-revisiting).<br>
+            $\Rightarrow$ "outside" sum $= |\mathcal{Y}|^{|\mathcal{X}|-m-1}$, independent of $a$.
+          </div>
+        </div>
+      </div>
+
+      <div class="box theorem" style="margin-top:0.55rem;font-size:0.88rem">
+        $$\sum_{f} P(d_{m+1}^y \mid f, m{+}1, a)
+          \;=\; |\mathcal{Y}|^{|\mathcal{X}|-m-1} \cdot |\mathcal{Y}|^{|\mathcal{X}|-m}
+          \quad \text{independent of }a. \quad\square$$
+      </div>
+    </div>
+    <div class="slide-footer"><div class="footer-accent"></div><span class="slide-num">9</span></div>
+  </div>
+
+  <!-- ══ SLIDE 10: Geometric Picture ═══════════════════════════════════ -->
+  <div class="slide section-divider">
+    <div class="slide-header">Wolpert–Macready No-Free-Lunch</div>
+    <div class="slide-body">
+      <div class="section-label">Part IV</div>
+      <div class="section-title">The Geometric Picture</div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-accent" style="background:rgba(255,255,255,0.3)"></div>
+      <span class="slide-num" style="color:rgba(255,255,255,0.4)">10</span>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 11: Geometry ════════════════════════════════════════════ -->
+  <div class="slide">
+    <div class="slide-header">Geometric Interpretation</div>
+    <div class="slide-body">
+      <h2 class="slide-title">Algorithms as Vectors</h2>
+
+      <div class="cols" style="align-items:center">
+        <div class="col" style="flex:0 0 310px">
+          <svg width="300" height="230" viewBox="0 0 300 230" font-family="Palatino,Georgia,serif">
+            <defs>
+              <marker id="ah" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L7,3 z" fill="#2D5172"/>
+              </marker>
+              <marker id="ahr" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L7,3 z" fill="#C04040"/>
+              </marker>
+              <marker id="ahg" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L7,3 z" fill="#B08020"/>
+              </marker>
+            </defs>
+            <!-- uniform diagonal -->
+            <line x1="50" y1="195" x2="230" y2="40" stroke="#C0C8D0" stroke-width="1.5" stroke-dasharray="5,4"/>
+            <text x="235" y="37" font-size="11" fill="#999">$\vec{1}$</text>
+            <!-- cone -->
+            <line x1="50" y1="195" x2="195" y2="25" stroke="#2E7D6F" stroke-width="1" stroke-dasharray="3,3" opacity="0.6"/>
+            <line x1="50" y1="195" x2="220" y2="100" stroke="#2E7D6F" stroke-width="1" stroke-dasharray="3,3" opacity="0.6"/>
+            <!-- a1 -->
+            <line x1="50" y1="195" x2="156" y2="68" stroke="#2D5172" stroke-width="2.2" marker-end="url(#ah)"/>
+            <text x="160" y="64" font-size="12" fill="#2D5172" font-style="italic">$\vec{v}_{a_1}$</text>
+            <!-- a2 -->
+            <line x1="50" y1="195" x2="205" y2="118" stroke="#C04040" stroke-width="2.2" marker-end="url(#ahr)"/>
+            <text x="210" y="116" font-size="12" fill="#C04040" font-style="italic">$\vec{v}_{a_2}$</text>
+            <!-- prior -->
+            <line x1="50" y1="195" x2="120" y2="110" stroke="#B08020" stroke-width="2" marker-end="url(#ahg)"/>
+            <text x="100" y="103" font-size="12" fill="#B08020" font-style="italic">$\vec{p}$</text>
+            <!-- origin -->
+            <circle cx="50" cy="195" r="3" fill="#2D5172"/>
+            <text x="30" y="210" font-size="10" fill="#666">$\mathbf{0}$</text>
+            <!-- NFL annotation -->
+            <text x="30" y="225" font-size="10" fill="#2E7D6F">same projection onto $\vec{1}$</text>
+          </svg>
+        </div>
+        <div class="col">
+          <p><strong>Define</strong> (in $|\mathcal{F}|$-dimensional space):</p>
+          <ul style="font-size:0.9rem;margin-top:0.3rem">
+            <li>$\vec{v}_{a,m}(f) := P(d_m^y \mid f, m, a)$ — <strong>behaviour vector</strong> of $a$</li>
+            <li>$\vec{p}(f) := P(f)$ — <strong>prior vector</strong></li>
+          </ul>
+          <p style="margin-top:0.5rem">Performance of $a$ under prior $P$:</p>
+          $$P(d_m^y \mid m, a) = \vec{v}_{a,m} \cdot \vec{p}$$
+          <div class="box key" style="margin-top:0.5rem;font-size:0.87rem">
+            <span class="box-label">NFL.</span>
+            All $\vec{v}_{a,m}$ have the <strong>same projection onto $\vec{1}$</strong>
+            (the uniform-prior diagonal).
+            Different algorithms point in different directions off the diagonal.
+          </div>
+          <p style="margin-top:0.4rem;font-size:0.87rem">
+            <strong>Good performance = alignment:</strong>
+            $a$ beats $a'$ on prior $\vec{p}$ iff $\vec{v}_a$ points
+            more toward $\vec{p}$ than $\vec{v}_{a'}$ does.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer"><div class="footer-accent"></div><span class="slide-num">11</span></div>
+  </div>
+
+  <!-- ══ SLIDE 12: Extensions ══════════════════════════════════════════ -->
+  <div class="slide">
+    <div class="slide-header">Extensions and Scope</div>
+    <div class="slide-body">
+      <h2 class="slide-title">When Does NFL Hold?</h2>
+
+      <div class="cols">
+        <div class="col">
+          <div class="box definition" style="font-size:0.88rem">
+            <span class="box-label">Stochastic algorithms.</span>
+            Replace deterministic $a$ with stochastic $\sigma$
+            specifying $P(x_{m+1} \mid d_m, \sigma)$.
+            The inside/outside split still holds.
+            Proof carries through identically.
+          </div>
+          <div class="box definition" style="margin-top:0.5rem;font-size:0.88rem">
+            <span class="box-label">Time-varying $f$ (Theorem 2).</span>
+            Cost function evolves by a bijection $T: \mathcal{F} \to \mathcal{F}$.
+            Average over all bijections $T$ instead of all $f$.
+            Each inner sum = $(|\mathcal{F}|-1)!$, independent of $a$.
+          </div>
+        </div>
+        <div class="col">
+          <p style="font-size:0.9rem"><strong>NFL holds beyond uniform $P(f)$:</strong></p>
+          <ul style="font-size:0.88rem">
+            <li><strong>Factorisable:</strong>
+                $P(f) = \prod_x P'(f(x))$ — i.i.d. cost values at each domain point.</li>
+            <li><strong>Permutation-closed:</strong>
+                $P$ is invariant under relabelling of rank-ordered cost values.</li>
+          </ul>
+          <div class="takeaway" style="margin-top:0.6rem;font-size:0.87rem">
+            The mere <em>existence</em> of structure in $P(f)$ doesn't justify any algorithm —
+            the structure must be <strong>known and exploited</strong>.
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer"><div class="footer-accent"></div><span class="slide-num">12</span></div>
+  </div>
+
+  <!-- ══ SLIDE 13: Section — Lean 4 ═══════════════════════════════════ -->
+  <div class="slide section-divider">
+    <div class="slide-header">Wolpert–Macready No-Free-Lunch</div>
+    <div class="slide-body">
+      <div class="section-label">Part V</div>
+      <div class="section-title">Lean 4 Formalization</div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-accent" style="background:rgba(255,255,255,0.3)"></div>
+      <span class="slide-num" style="color:rgba(255,255,255,0.4)">13</span>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 14: Lean Code ════════════════════════════════════════════ -->
+  <div class="slide">
+    <div class="slide-header">Lean 4 — Formalization</div>
+    <div class="slide-body">
+      <h2 class="slide-title">Machine-Verified Proof</h2>
+
+<pre class="lean"><span class="cm">-- Algorithm: nextQuery encodes P(x_{m+1} | d_m, a)</span>
+<span class="kw">structure</span> <span class="ty">SearchAlg</span> (X Y : <span class="ty">Type</span>*) <span class="kw">where</span>
+  nextQuery : <span class="ty">List</span> (X × Y) → <span class="ty">PMF</span> X
+
+<span class="cm">-- Non-revisiting: a : d ↦ x ∉ d^x</span>
+<span class="kw">def</span> <span class="fn">NonRevisiting</span> (A : <span class="ty">SearchAlg</span> X Y) :=
+  ∀ h x, x ∈ h.map Prod.fst → A.nextQuery h x = <span class="num">0</span>
+
+<span class="cm">-- Σ_f P(d_m^y | f, m, a)  is independent of a:</span>
+<span class="kw">theorem</span> <span class="fn">wolpert_macready</span>
+    [<span class="ty">Fintype</span> X] [<span class="ty">Fintype</span> Y] [<span class="ty">DecidableEq</span> X]
+    (A₁ A₂ : <span class="ty">SearchAlg</span> X Y) (m : <span class="ty">Nat</span>) (hm : m ≤ Fintype.card X)
+    (h₁ : A₁.NonRevisiting) (h₂ : A₂.NonRevisiting)
+    (c : <span class="ty">List</span> Y) (hc : c.length = m) :
+    (∑ f : X → Y, observations A₁ f m c) =
+      ∑ f : X → Y, observations A₂ f m c</pre>
+
+      <div class="cols" style="margin-top:0.4rem;gap:1rem">
+        <div class="col">
+          <div class="box lemma" style="font-size:0.85rem">
+            <span class="box-label">Key lemma.</span>
+            <code>avgFuture_eq_pow</code>: the "inside/outside" induction in Lean.
+            Base case = <code>consistentCount_eq_pow_card</code> (count inside).
+            Step = non-revisiting kills seen $x$; PMF sums to 1.
+          </div>
+        </div>
+        <div class="col">
+          <div class="box remark" style="font-size:0.85rem">
+            <span class="box-label">Axiom check.</span>
+            <code>#print axioms wolpert_macready</code><br>
+            → only <code>propext</code>, <code>Classical.choice</code>,
+            <code>Quot.sound</code>. No <code>sorry</code>.
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer"><div class="footer-accent"></div><span class="slide-num">14</span></div>
+  </div>
+
+  <!-- ══ SLIDE 15: Closing / Q&A ═══════════════════════════════════════ -->
+  <div class="slide">
+    <div class="slide-header">Summary and Q&amp;A</div>
+    <div class="slide-body">
+      <h2 class="slide-title">What We Showed</h2>
+
+      <ul style="margin-bottom:0.7rem;font-size:0.94rem">
+        <li>
+          <strong>Framework:</strong> four objects — sample $d_m$, algorithm $a$,
+          performance $P(d_m^y \mid f,m,a)$, prior $P(f)$.
+        </li>
+        <li>
+          <strong>Theorem 1:</strong>
+          $\sum_f P(d_m^y \mid f,m,a_1) = \sum_f P(d_m^y \mid f,m,a_2)$
+          for all $a_1, a_2$.
+        </li>
+        <li>
+          <strong>Proof:</strong> induction on $m$; inside/outside split of
+          $\sum_f$ makes every coordinate ordering equivalent.
+        </li>
+        <li>
+          <strong>Geometry:</strong> all behaviour vectors $\vec{v}_a$ have
+          equal projection onto $\vec{1}$; performance = alignment with $\vec{p}$.
+        </li>
+        <li>
+          <strong>Scope:</strong> holds for stochastic algorithms, time-varying $f$,
+          and many non-uniform priors.
+        </li>
+      </ul>
+
+      <div class="box remark" style="font-size:0.88rem">
+        <span class="box-label">Anticipated objection.</span>
+        "SA beats random search on real problems." — Yes, because real problems
+        are <em>not</em> uniformly distributed. SA's gain on locally-structured problems
+        is exactly paid for by losses on deceptive ones. NFL makes this trade-off explicit.
+      </div>
+    </div>
+    <div class="slide-footer"><div class="footer-accent"></div><span class="slide-num">15</span></div>
+  </div>
+
+</div><!-- .deck -->
+</body>
+</html>

@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Batch Stochastic No-Free-Lunch — Slides</title>
+
+  <!-- KaTeX -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {
+      delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '\\[', right: '\\]', display: true},
+        {left: '$', right: '$', display: false},
+        {left: '\\(', right: '\\)', display: false}
+      ]
+    });"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary:   #2D5172;
+      --teal:      #2E7D6F;
+      --red:       #C04040;
+      --gold:      #B08020;
+      --body-text: #2D3A4A;
+      --bg:        #FFFFFF;
+      --box-bg:    #F2F4F7;
+      --rule:      #C0C8D0;
+      --slide-w:   900px;
+      --slide-h:   506px;
+    }
+
+    html, body {
+      background: #d0d4da;
+      font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+      color: var(--body-text);
+    }
+
+    .deck {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem 4rem;
+      gap: 1.5rem;
+    }
+
+    .slide {
+      width: var(--slide-w);
+      height: var(--slide-h);
+      background: var(--bg);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.22);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .slide-header {
+      background: var(--primary);
+      color: #fff;
+      padding: 0 2rem;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      font-size: 1.01rem;
+      font-weight: normal;
+      flex-shrink: 0;
+      letter-spacing: 0.01em;
+    }
+
+    .slide-body {
+      flex: 1;
+      padding: 1.5rem 2.3rem 1.1rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      overflow: hidden;
+      font-size: 0.97rem;
+      line-height: 1.58;
+    }
+
+    .slide-footer {
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      flex-shrink: 0;
+    }
+    .footer-accent {
+      width: 64px;
+      height: 5px;
+      background: var(--teal);
+      border-radius: 2px;
+    }
+    .slide-num { font-size: 0.72rem; color: #999; }
+
+    /* ── Cover ─────────────────────────────────────────────────────────── */
+    .slide.cover .slide-body {
+      justify-content: center;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    .cover-tag {
+      font-size: 0.82rem;
+      color: var(--teal);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+    .cover-title {
+      font-size: 2.1rem;
+      color: var(--primary);
+      font-weight: normal;
+      line-height: 1.2;
+      margin-bottom: 0.5rem;
+    }
+    .cover-sub { font-size: 1.05rem; color: #556; font-style: italic; }
+    .cover-meta { font-size: 0.83rem; color: #888; margin-top: 1.5rem; }
+
+    /* ── Section divider ───────────────────────────────────────────────── */
+    .slide.section-divider .slide-body {
+      justify-content: center;
+      background: var(--primary);
+    }
+    .slide.section-divider .slide-header { background: #1e3a55; }
+    .slide.section-divider .slide-footer { background: var(--primary); }
+    .section-label {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.55);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+    .section-title { font-size: 2rem; color: #fff; font-weight: normal; }
+
+    /* ── Environments ──────────────────────────────────────────────────── */
+    .box {
+      background: var(--box-bg);
+      border-radius: 4px;
+      padding: 0.75rem 1.1rem;
+      margin: 0.45rem 0;
+      font-size: 0.93rem;
+    }
+    .box.theorem   { border-left: 4px solid var(--primary); }
+    .box.definition { border-left: 4px solid var(--teal); }
+    .box.lemma     { border-left: 4px solid #4a7aab; }
+    .box.remark    { border-left: 4px solid var(--gold); background: #faf6ec; }
+    .box.key       { border-left: 4px solid var(--red); background: #fdf2f2; }
+
+    .box-label {
+      font-weight: bold;
+      color: var(--primary);
+      margin-right: 0.3em;
+      font-size: 0.88rem;
+    }
+    .box.definition .box-label { color: var(--teal); }
+    .box.lemma .box-label { color: #4a7aab; }
+    .box.remark .box-label { color: var(--gold); }
+    .box.key .box-label { color: var(--red); }
+
+    h2.slide-title {
+      font-size: 1.35rem;
+      color: var(--primary);
+      font-weight: bold;
+      margin-bottom: 0.7rem;
+    }
+    p { margin: 0.35rem 0; }
+    ul, ol { padding-left: 1.5rem; margin: 0.35rem 0; }
+    li { margin: 0.2rem 0; }
+    strong { color: var(--primary); }
+
+    .takeaway {
+      background: #eef6f4;
+      border-left: 4px solid var(--teal);
+      padding: 0.55rem 1rem;
+      margin: 0.6rem 0;
+      color: var(--teal);
+      font-style: italic;
+      border-radius: 0 4px 4px 0;
+      font-size: 0.9rem;
+    }
+    .takeaway strong { font-style: normal; color: var(--teal); }
+
+    pre.lean {
+      font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+      font-size: 0.75rem;
+      background: #1e1e2e;
+      color: #cdd6f4;
+      padding: 0.8rem 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      line-height: 1.48;
+      margin: 0.4rem 0;
+    }
+    pre.lean .kw  { color: #cba6f7; }
+    pre.lean .fn  { color: #89b4fa; }
+    pre.lean .cm  { color: #585b70; font-style: italic; }
+    pre.lean .st  { color: #a6e3a1; }
+    pre.lean .num { color: #fab387; }
+    pre.lean .ty  { color: #94e2d5; }
+
+    .cols { display: flex; gap: 1.4rem; align-items: flex-start; }
+    .col  { flex: 1; }
+
+    .step-list { list-style: none; padding: 0; }
+    .step-list li {
+      display: flex;
+      gap: 0.7rem;
+      align-items: flex-start;
+      margin: 0.4rem 0;
+    }
+    .step-num {
+      background: var(--primary);
+      color: #fff;
+      border-radius: 50%;
+      width: 1.4rem;
+      height: 1.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+    }
+  </style>
+</head>
+<body>
+<div class="deck">
+
+  <!-- ══════════════════════════════════════════════════════ SLIDE 1: Cover -->
+  <div class="slide cover">
+    <div class="slide-header">DSC 190/291 &nbsp;·&nbsp; No-Free-Lunch Theorems</div>
+    <div class="slide-body">
+      <div class="cover-tag">No-Free-Lunch Theorems</div>
+      <div class="cover-title">Batch Stochastic<br>No-Free-Lunch</div>
+      <div class="cover-sub">Every learner fails on some realizable distribution</div>
+      <div class="cover-meta">
+        DSC 190/291 Learning Theory &nbsp;·&nbsp; Tianhao Wang &nbsp;·&nbsp; UCSD Spring 2026
+      </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-accent"></div>
+      <span class="slide-num">1</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 2: Section — Setting -->
+  <div class="slide section-divider">
+    <div class="slide-header">Batch Stochastic No-Free-Lunch</div>
+    <div class="slide-body">
+      <div class="section-label">Part I</div>
+      <div class="section-title">Setting</div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-accent" style="background:rgba(255,255,255,0.3)"></div>
+      <span class="slide-num" style="color:rgba(255,255,255,0.4)">2</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 3: Setting -->
+  <div class="slide">
+    <div class="slide-header">Setting — Batch Binary Classification</div>
+    <div class="slide-body">
+      <h2 class="slide-title">Setting</h2>
+
+      <div class="cols">
+        <div class="col">
+          <div class="box definition">
+            <span class="box-label">Learner.</span>
+            A <strong>deterministic learner</strong> maps training data to a hypothesis:
+            $$A : (\mathcal{X} \times \{0,1\})^* \to (\mathcal{X} \to \{0,1\})$$
+          </div>
+          <div class="box definition" style="margin-top:0.5rem">
+            <span class="box-label">Risk.</span>
+            0-1 loss under distribution $D$:
+            $$R(D, h) = \mathbb{E}_{(x,y)\sim D}[\mathbf{1}[h(x)\neq y]]$$
+          </div>
+        </div>
+        <div class="col">
+          <div class="box definition">
+            <span class="box-label">Failure probability.</span>
+            $$\delta(D, A, m) = \Pr_{S \sim D^m}\!\bigl[R(D, A(S)) \geq \tfrac{1}{8}\bigr]$$
+          </div>
+          <div class="box definition" style="margin-top:0.5rem">
+            <span class="box-label">Realizability.</span>
+            $D$ is <strong>realizable</strong> if there exists $f$ with $R(D, f) = 0$,
+            i.e., $D$ is supported on the graph of $f$.
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-accent"></div>
+      <span class="slide-num">3</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 4: Main Theorem -->
+  <div class="slide section-divider">
+    <div class="slide-header">Batch Stochastic No-Free-Lunch</div>
+    <div class="slide-body">
+      <div class="section-label">Part II</div>
+      <div class="section-title">Main Theorem</div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-accent" style="background:rgba(255,255,255,0.3)"></div>
+      <span class="slide-num" style="color:rgba(255,255,255,0.4)">4</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 5: Theorem -->
+  <div class="slide">
+    <div class="slide-header">Main Theorem</div>
+    <div class="slide-body">
+      <h2 class="slide-title">Theorem (Batch Stochastic NFL)</h2>
+
+      <div class="box theorem">
+        Let $\mathcal{X}$ be a finite domain with $|\mathcal{X}| \geq 2m$.
+        For any deterministic learner $A$, there exists a <strong>realizable</strong>
+        distribution $D$ on $\mathcal{X} \times \{0,1\}$ such that:
+        $$\delta(D,\, A,\, m)
+          \;=\; \Pr_{S \sim D^m}\!\bigl[R(D,\, A(S)) \geq \tfrac{1}{8}\bigr]
+          \;\geq\; \frac{1}{7}.$$
+      </div>
+
+      <div class="takeaway" style="margin-top:0.7rem">
+        <strong>Takeaway.</strong>
+        No matter how clever the learner, there is always a realizable distribution
+        for which it fails with probability $\geq 1/7$.
+      </div>
+
+      <p style="margin-top:0.55rem;font-size:0.9rem">
+        <strong>Contrast with Wolpert–Macready:</strong> here the target is fixed
+        before sampling (not adversarially adaptive). The difficulty comes from
+        the information-theoretic blindspot of seeing only $m$ of $2m$ points.
+      </p>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-accent"></div>
+      <span class="slide-num">5</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 6: Section — Proof -->
+  <div class="slide section-divider">
+    <div class="slide-header">Batch Stochastic No-Free-Lunch</div>
+    <div class="slide-body">
+      <div class="section-label">Part III</div>
+      <div class="section-title">Proof</div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-accent" style="background:rgba(255,255,255,0.3)"></div>
+      <span class="slide-num" style="color:rgba(255,255,255,0.4)">6</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 7: m=0 Case -->
+  <div class="slide">
+    <div class="slide-header">Proof — Zero-Sample Case</div>
+    <div class="slide-body">
+      <h2 class="slide-title">Case 1: $m = 0$</h2>
+
+      <div class="box key">
+        <span class="box-label">Strategy.</span>
+        With no training data, $A([])$ is a fixed hypothesis — fool it at a single point.
+      </div>
+
+      <ul style="margin-top:0.55rem">
+        <li>Pick any $x_0 \in \mathcal{X}$; set $b := \lnot A([])(x_0)$.</li>
+        <li>Define $D := \mathrm{Dirac}(x_0, b)$ — a point mass at the adversarial pair.</li>
+        <li>$D$ is realizable: the constant $b$ has risk 0 under $D$.</li>
+        <li>The unique 0-sample training set is $[]$; $A([])$ predicts $\lnot b$ at $x_0$,
+            so $R(D, A([])) = 1 \geq 1/8$.</li>
+        <li>The $D^0$-measure of the failure event equals 1, so $\delta(D, A, 0) = 1 \geq 1/7$.</li>
+      </ul>
+
+      <div class="takeaway" style="margin-top:0.6rem">
+        <strong>Lean 4:</strong> <code>batch_stochastic_NFL_zero</code> —
+        uses <code>Measure.dirac</code>, <code>integral_dirac</code>,
+        <code>Measure.pi</code> of the empty product = 1.
+      </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-accent"></div>
+      <span class="slide-num">7</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 8: Setup m>=1 -->
+  <div class="slide">
+    <div class="slide-header">Proof — Setup for $m \geq 1$</div>
+    <div class="slide-body">
+      <h2 class="slide-title">Case 2: $m \geq 1$ — Choosing the Support</h2>
+
+      <p>
+        Since $2m \leq |\mathcal{X}|$, pick a finset $C \subseteq \mathcal{X}$ with $|C| = 2m$.
+      </p>
+
+      <div class="box definition">
+        <span class="box-label">Graph distribution.</span>
+        For any labelling $f : C \to \{0,1\}$, define
+        $$D_f \;:=\; \mathrm{Uniform}\!\bigl(\{(x, f(x)) : x \in C\}\bigr)$$
+        — the uniform distribution on the graph of $f$ over $C$.
+        This is realizable (risk of $f$ under $D_f$ is 0).
+      </div>
+
+      <p style="margin-top:0.55rem">
+        Let $\mathcal{F} = \{0,1\}^C$ (all $2^{2m}$ labellings) and
+        $\Omega = C^m$ (all training samples of size $m$ from $C$).
+      </p>
+
+      <div class="box key" style="margin-top:0.45rem">
+        <span class="box-label">Goal.</span>
+        Show: some $f \in \mathcal{F}$ has combinatorial failure rate
+        $\dfrac{|\{S \in \Omega : R(D_f, A(S)) \geq 1/8\}|}{|\Omega|} \;\geq\; \dfrac{1}{7}$.
+      </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-accent"></div>
+      <span class="slide-num">8</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 9: Lower Bound -->
+  <div class="slide">
+    <div class="slide-header">Proof — Fixed-Sample Lower Bound</div>
+    <div class="slide-body">
+      <h2 class="slide-title">Lemma: Average Risk $\geq \tfrac{1}{4}$ per Sample</h2>
+
+      <div class="box lemma">
+        <span class="box-label">Lemma.</span>
+        For any fixed sample $S = (z_1,\ldots,z_m) \in \Omega$:
+        $$\frac{1}{|\mathcal{F}|}\sum_{f \in \mathcal{F}}
+            R(D_f,\, A(\mathrm{sample}(S,f))) \;\geq\; \frac{1}{4}.$$
+      </div>
+
+      <p style="margin-top:0.5rem"><strong>Proof sketch:</strong></p>
+      <ul style="font-size:0.9rem">
+        <li>$S$ sees at most $m$ distinct points from $C$ (with $|C| = 2m$).</li>
+        <li>Let $U$ = unseen points: $|U| \geq m$.</li>
+        <li>For each unseen $z \in U$: pairing $f$ with its label-flip $f^z$ at $z$
+            shows loss$(f) +$ loss$(f^z) = 1$ at point $z$.
+            <strong>Total contribution to average risk $\geq 1/(2m)$ per unseen point.</strong>
+        </li>
+        <li>With $|U| \geq m$ unseen points:
+            average risk $\geq m \cdot \frac{1}{2m} \cdot \frac{1}{2} = \frac{1}{4}$.</li>
+      </ul>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-accent"></div>
+      <span class="slide-num">9</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 10: Double Counting -->
+  <div class="slide">
+    <div class="slide-header">Proof — Double-Counting Contradiction</div>
+    <div class="slide-body">
+      <h2 class="slide-title">Contradiction via Double-Counting (Fubini)</h2>
+
+      <p>
+        Suppose for contradiction that every $f \in \mathcal{F}$ has failure rate $< 1/7$.
+        Consider the double average:
+        $$\Sigma := \frac{1}{|\mathcal{F}||\Omega|}
+          \sum_{f \in \mathcal{F}} \sum_{S \in \Omega} R(D_f, A(S))$$
+      </p>
+
+      <div class="cols" style="margin-top:0.4rem">
+        <div class="col">
+          <div class="box key" style="font-size:0.88rem">
+            <span class="box-label">Upper bound.</span>
+            If failure rate $< 1/7$: on bad samples use bound $\leq 1$,
+            on good samples use bound $< 1/8$:
+            $$\Sigma < \frac{1}{7} + \frac{6}{7}\cdot\frac{1}{8}
+              = \frac{8+6}{56} = \frac{14}{56} = \frac{1}{4}$$
+          </div>
+        </div>
+        <div class="col">
+          <div class="box lemma" style="font-size:0.88rem">
+            <span class="box-label">Lower bound.</span>
+            Swap $f$ and $S$ (Fubini), then apply the fixed-sample lemma:
+            $$\Sigma \;=\; \frac{1}{|\Omega|}\sum_S
+                \underbrace{\frac{1}{|\mathcal{F}|}\sum_f R_f(S)}_{\geq\,1/4}
+              \;\geq\; \frac{1}{4}$$
+          </div>
+        </div>
+      </div>
+
+      <div class="takeaway" style="margin-top:0.5rem;font-size:0.88rem">
+        Contradiction: $\Sigma < 1/4$ and $\Sigma \geq 1/4$ cannot both hold.
+        So some $f^* \in \mathcal{F}$ must have failure rate $\geq 1/7$.
+      </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-accent"></div>
+      <span class="slide-num">10</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 11: Bridge -->
+  <div class="slide">
+    <div class="slide-header">Proof — Measure-Theoretic Bridge</div>
+    <div class="slide-body">
+      <h2 class="slide-title">Bridging to the Continuous Setting</h2>
+
+      <p>
+        We have a combinatorial failure rate over $\Omega = C^m$; we need
+        a measure-theoretic statement about $D_{f^*}^m$.
+      </p>
+
+      <div class="box lemma">
+        <span class="box-label">Measure Bridge Lemma.</span>
+        The combinatorial failure rate $\leq$ the measure-theoretic failure probability:
+        $$\frac{|\{S \in \Omega : R(D_f, A(S)) \geq 1/8\}|}{|\Omega|}
+          \;\leq\;
+          \Pr_{S \sim D_f^m}\!\bigl[R(D_f, A(S)) \geq \tfrac{1}{8}\bigr]$$
+      </div>
+
+      <ul style="margin-top:0.5rem;font-size:0.9rem">
+        <li>Bad combinatorial samples embed injectively into the $D_f^m$-failure event
+            via the support-trace embedding.</li>
+        <li>Each embedded sample gets mass $= 1/|\Omega|$ under $D_f^m$
+            (by uniformity of $D_f$ on the $|C| = 2m$ graph points).</li>
+        <li>Measure is preserved: $\Pr_{D_f^m}[\text{failure event}] \geq$ failure rate.</li>
+      </ul>
+
+      <div class="takeaway" style="margin-top:0.5rem;font-size:0.88rem">
+        Pick $f^*$ from Step 3. Then $D_{f^*}$ is realizable and
+        $\delta(D_{f^*}, A, m) \geq 1/7$.
+      </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-accent"></div>
+      <span class="slide-num">11</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 12: Proof Summary -->
+  <div class="slide">
+    <div class="slide-header">Proof — Summary</div>
+    <div class="slide-body">
+      <h2 class="slide-title">Proof at a Glance</h2>
+
+      <ul class="step-list">
+        <li>
+          <span class="step-num">1</span>
+          <span><strong>$m = 0$:</strong> Dirac at a single point labelled adversarially.</span>
+        </li>
+        <li>
+          <span class="step-num">2</span>
+          <span><strong>Pick support</strong> $C \subseteq \mathcal{X}$ with $|C| = 2m$;
+            define $D_f$ = uniform on graph of $f$ over $C$.</span>
+        </li>
+        <li>
+          <span class="step-num">3</span>
+          <span><strong>Fixed-sample lower bound:</strong>
+            for any $S$, average risk over all $f \geq 1/4$
+            (unseen points contribute independent label pairs).</span>
+        </li>
+        <li>
+          <span class="step-num">4</span>
+          <span><strong>Contradiction:</strong> if all failure rates $< 1/7$,
+            double-counting gives $\Sigma < 1/4$ and $\Sigma \geq 1/4$.</span>
+        </li>
+        <li>
+          <span class="step-num">5</span>
+          <span><strong>Bridge:</strong> combinatorial failure rate
+            $\leq$ measure-theoretic failure probability via support-trace embedding.</span>
+        </li>
+      </ul>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-accent"></div>
+      <span class="slide-num">12</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 13: Section — Lean 4 -->
+  <div class="slide section-divider">
+    <div class="slide-header">Batch Stochastic No-Free-Lunch</div>
+    <div class="slide-body">
+      <div class="section-label">Part IV</div>
+      <div class="section-title">Lean 4 Formalization</div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-accent" style="background:rgba(255,255,255,0.3)"></div>
+      <span class="slide-num" style="color:rgba(255,255,255,0.4)">13</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 14: Lean Definitions -->
+  <div class="slide">
+    <div class="slide-header">Lean 4 — Core Definitions</div>
+    <div class="slide-body">
+      <h2 class="slide-title">Core Lean 4 Definitions</h2>
+
+<pre class="lean"><span class="cm">-- Deterministic learning algorithm</span>
+<span class="kw">abbrev</span> <span class="ty">Learner</span> (X : <span class="ty">Type</span>*) := <span class="ty">List</span> (X × <span class="ty">Bool</span>) → (X → <span class="ty">Bool</span>)
+
+<span class="cm">-- Measure-theoretic risk</span>
+<span class="kw">noncomputable def</span> <span class="fn">risk</span> (D : <span class="ty">Measure</span> (X × <span class="ty">Bool</span>)) (h : X → <span class="ty">Bool</span>) : ℝ :=
+  ∫ xy, (<span class="kw">if</span> h xy.1 = xy.2 <span class="kw">then</span> <span class="num">0</span> <span class="kw">else</span> <span class="num">1</span>) ∂D
+
+<span class="cm">-- Failure probability</span>
+<span class="kw">noncomputable def</span> <span class="fn">failureProb</span>
+    (D : <span class="ty">Measure</span> (X × <span class="ty">Bool</span>)) (A : <span class="ty">Learner</span> X) (m : <span class="ty">Nat</span>) (ε : ℝ) : ℝ :=
+  (<span class="ty">Measure</span>.pi (<span class="kw">fun</span> _ : <span class="ty">Fin</span> m => D))
+    {S | ε ≤ risk D (A (<span class="ty">List</span>.ofFn S))}.toReal
+
+<span class="cm">-- Main theorem</span>
+<span class="kw">theorem</span> <span class="fn">batch_stochastic_NFL</span>
+    [<span class="ty">Fintype</span> X] [<span class="ty">MeasurableSingletonClass</span> X] [<span class="ty">Nonempty</span> X]
+    (A : <span class="ty">Learner</span> X) (m : <span class="ty">Nat</span>) (hm : <span class="num">2</span> * m ≤ <span class="ty">Fintype</span>.card X) :
+    ∃ D : <span class="ty">Measure</span> (X × <span class="ty">Bool</span>), <span class="ty">IsProbabilityMeasure</span> D ∧
+      (∃ f : X → <span class="ty">Bool</span>, risk D f = <span class="num">0</span>) ∧
+      (<span class="num">1</span> : ℝ) / <span class="num">7</span> ≤ failureProb D A m (<span class="num">1</span> / <span class="num">8</span>) := ...</pre>
+
+      <p style="font-size:0.85rem;margin-top:0.35rem">
+        Axioms: only <code>propext</code>, <code>Classical.choice</code>, <code>Quot.sound</code>.
+      </p>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-accent"></div>
+      <span class="slide-num">14</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 15: Lean Key Lemmas -->
+  <div class="slide">
+    <div class="slide-header">Lean 4 — Key Intermediate Lemmas</div>
+    <div class="slide-body">
+      <h2 class="slide-title">Key Lemmas in Lean 4</h2>
+
+<pre class="lean"><span class="cm">-- Uniform distribution on labelled graph of f over C</span>
+<span class="kw">noncomputable def</span> <span class="fn">graphPMF</span> (C : <span class="ty">Finset</span> X) (f : X → <span class="ty">Bool</span>) (hC : C.Nonempty)
+    : <span class="ty">PMF</span> (X × <span class="ty">Bool</span>) :=
+  <span class="ty">PMF</span>.uniformOfFinset (graphFinset C f) (graphFinset_nonempty f hC)
+
+<span class="cm">-- Fixed-sample lower bound</span>
+<span class="kw">theorem</span> <span class="fn">sum_abstractRisk_ge</span> (S : <span class="ty">Fin</span> m → Z) ... :
+    ((<span class="ty">Fintype</span>.card (<span class="ty">Fin</span> m → Z) : ℝ) / <span class="num">4</span>) ≤
+      ∑ f : Z → <span class="ty">Bool</span>, abstractRisk e f (A (abstractSampleList e f S)) := ...
+
+<span class="cm">-- Contradiction: some f has failure rate ≥ 1/7</span>
+<span class="kw">theorem</span> <span class="fn">exists_abstractFailureRate_ge</span> (C : <span class="ty">Finset</span> X) ... :
+    ∃ fZ : Z → <span class="ty">Bool</span>, (<span class="num">1</span> : ℝ) / <span class="num">7</span> ≤ abstractFailureRate e A fZ m := ...
+
+<span class="cm">-- Measure bridge</span>
+<span class="kw">theorem</span> <span class="fn">abstractFailureRate_le_failureProb_graph</span> ... :
+    abstractFailureRate e A fZ m ≤
+      failureProb (graphPMF C fX hC).toMeasure A m (<span class="num">1</span> / <span class="num">8</span>) := ...</pre>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-accent"></div>
+      <span class="slide-num">15</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 16: Closing -->
+  <div class="slide">
+    <div class="slide-header">Batch Stochastic No-Free-Lunch — Summary</div>
+    <div class="slide-body">
+      <h2 class="slide-title">What We Showed</h2>
+
+      <ul style="margin-bottom:0.8rem">
+        <li>For any learner $A$ on a domain with $|\mathcal{X}| \geq 2m$, there
+            exists a realizable $D$ with $\delta(D, A, m) \geq 1/7$.</li>
+        <li>The hard distribution is uniform on a graph of size $2m$
+            — the unseen half is the source of failure.</li>
+        <li>The proof uses a clean double-counting (Fubini) argument:
+            average-risk-per-sample $\geq 1/4$ contradicts failure-rate-$<1/7$.</li>
+        <li>Machine-verified in Lean 4 / Mathlib.</li>
+      </ul>
+
+      <div class="box remark">
+        <span class="box-label">Why $|\mathcal{X}| \geq 2m$?</span>
+        We need a support of size $2m$ so that any training sample of size $m$
+        leaves at least $m$ unseen points. This is the minimal condition for the
+        fixed-sample lower bound.
+      </div>
+
+      <div class="takeaway" style="margin-top:0.6rem">
+        <strong>Three NFL theorems, one message.</strong>
+        Without inductive bias — online adversarial, stochastic search, or batch PAC —
+        learning is impossible in the worst case.
+      </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-accent"></div>
+      <span class="slide-num">16</span>
+    </div>
+  </div>
+
+</div><!-- .deck -->
+</body>
+</html>

@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wolpert–Macready No-Free-Lunch — Notes</title>
+
+  <!-- KaTeX -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {
+      delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '\\[', right: '\\]', display: true},
+        {left: '$', right: '$', display: false},
+        {left: '\\(', right: '\\)', display: false}
+      ]
+    });"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    :root {
+      --primary:   #2D5172;
+      --teal:      #2E7D6F;
+      --red:       #C04040;
+      --gold:      #B08020;
+      --body-text: #2D3A4A;
+      --bg:        #FFFFFF;
+      --box-bg:    #F2F4F7;
+      --rule:      #C0C8D0;
+      --code-kw:   #C04040;
+      --code-cm:   #888888;
+    }
+
+    html { font-size: 17px; }
+
+    body {
+      font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+      color: var(--body-text);
+      background: var(--bg);
+      margin: 0;
+      padding: 0;
+    }
+
+    nav.topnav {
+      background: var(--primary);
+      padding: 0.55rem 2.5rem;
+      font-size: 0.82rem;
+      color: #fff;
+      letter-spacing: 0.02em;
+    }
+    nav.topnav a { color: #b8cfe0; text-decoration: none; }
+    nav.topnav a:hover { color: #fff; }
+    nav.topnav span { margin: 0 0.35em; color: #8aadc8; }
+
+    .page-wrap {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 2.8rem 2.5rem 5rem;
+    }
+
+    h1.page-title {
+      font-size: 1.9rem;
+      color: var(--primary);
+      margin: 0 0 0.25rem;
+      font-weight: normal;
+    }
+    .subtitle {
+      font-size: 1.05rem;
+      color: var(--teal);
+      margin: 0 0 0.5rem;
+      font-style: italic;
+    }
+    .meta {
+      font-size: 0.82rem;
+      color: var(--code-cm);
+      margin-bottom: 2rem;
+    }
+    hr.title-rule {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 1.2rem 0 2rem;
+    }
+
+    h2 {
+      font-size: 1.28rem;
+      color: var(--primary);
+      font-weight: bold;
+      margin: 2.8rem 0 0.7rem;
+      padding-bottom: 0.3rem;
+      border-bottom: 2px solid var(--primary);
+    }
+    h3 {
+      font-size: 1.05rem;
+      color: var(--primary);
+      font-weight: bold;
+      margin: 1.6rem 0 0.4rem;
+    }
+
+    .env {
+      background: var(--box-bg);
+      border-radius: 4px;
+      padding: 1rem 1.25rem;
+      margin: 1.2rem 0;
+      position: relative;
+    }
+    .env-label {
+      font-weight: bold;
+      color: var(--primary);
+      margin-right: 0.35em;
+    }
+    .env-title {
+      font-style: italic;
+      color: var(--body-text);
+      margin-right: 0.35em;
+    }
+    .env.definition { border-left: 4px solid var(--teal); }
+    .env.definition .env-label { color: var(--teal); }
+    .env.theorem { border-left: 4px solid var(--primary); }
+    .env.lemma { border-left: 4px solid #4a7aab; }
+    .env.lemma .env-label { color: #4a7aab; }
+    .env.remark { border-left: 4px solid var(--gold); background: #faf6ec; }
+    .env.remark .env-label { color: var(--gold); }
+    .env.proof {
+      background: #f8f9fa;
+      border-left: 4px solid var(--rule);
+    }
+    .env.proof .env-label { color: var(--body-text); font-style: italic; font-weight: bold; }
+    .qed {
+      text-align: right;
+      font-size: 1.1rem;
+      color: var(--primary);
+      margin-top: 0.4rem;
+    }
+
+    /* Four-object grid */
+    .objects-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.9rem;
+      margin: 1.2rem 0;
+    }
+    .obj-card {
+      background: var(--box-bg);
+      border-radius: 4px;
+      padding: 0.8rem 1rem;
+      border-left: 4px solid var(--teal);
+    }
+    .obj-card .obj-name {
+      font-weight: bold;
+      color: var(--teal);
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.3rem;
+    }
+    .obj-card p { margin: 0.2rem 0; font-size: 0.94rem; }
+
+    .algorithm {
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      padding: 0.85rem 1.2rem;
+      margin: 1.2rem 0;
+      font-size: 0.95rem;
+    }
+    .algorithm-header {
+      font-weight: bold;
+      color: var(--primary);
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 0.4rem;
+      margin-bottom: 0.6rem;
+    }
+    .algorithm ol, .algorithm ul { margin: 0.3rem 0; padding-left: 1.6rem; }
+    .algorithm li { margin: 0.25rem 0; }
+
+    code {
+      font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+      font-size: 0.87em;
+      background: #eef0f3;
+      padding: 0.1em 0.35em;
+      border-radius: 3px;
+      color: var(--code-kw);
+    }
+
+    pre.lean {
+      font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+      font-size: 0.83rem;
+      background: #1e1e2e;
+      color: #cdd6f4;
+      padding: 1rem 1.2rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      line-height: 1.55;
+      margin: 1rem 0;
+    }
+    pre.lean .kw  { color: #cba6f7; }
+    pre.lean .fn  { color: #89b4fa; }
+    pre.lean .cm  { color: #585b70; font-style: italic; }
+    pre.lean .st  { color: #a6e3a1; }
+    pre.lean .num { color: #fab387; }
+    pre.lean .ty  { color: #94e2d5; }
+
+    .takeaway {
+      background: #eef6f4;
+      border-left: 4px solid var(--teal);
+      padding: 0.75rem 1.2rem;
+      margin: 1.2rem 0;
+      color: var(--teal);
+      font-style: italic;
+      border-radius: 0 4px 4px 0;
+    }
+    .takeaway strong { font-style: normal; }
+
+    /* Geometric diagram (pure CSS) */
+    .geo-diagram {
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      padding: 1.2rem 1.4rem;
+      margin: 1.2rem 0;
+      background: #f8f9fb;
+      font-size: 0.93rem;
+    }
+    .geo-diagram svg { display: block; margin: 0 auto 0.8rem; }
+
+    p { margin: 0.7rem 0; line-height: 1.72; }
+    ul, ol { line-height: 1.72; padding-left: 1.8rem; }
+    li { margin: 0.2rem 0; }
+    strong { color: var(--primary); }
+
+    .footnote {
+      font-size: 0.82rem;
+      color: var(--code-cm);
+      border-top: 1px solid var(--rule);
+      margin-top: 3rem;
+      padding-top: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="topnav">
+  <a href="#">DSC 190/291</a>
+  <span>/</span>
+  <a href="#">No-Free-Lunch</a>
+  <span>/</span>
+  Wolpert–Macready NFL
+</nav>
+
+<div class="page-wrap">
+
+  <h1 class="page-title">Wolpert–Macready No-Free-Lunch</h1>
+  <p class="subtitle">Week — No-Free-Lunch Theorems</p>
+  <p class="meta">DSC 190/291 Learning Theory &nbsp;·&nbsp; Tianhao Wang &nbsp;·&nbsp; UCSD Spring 2026
+    &nbsp;·&nbsp; Based on Wolpert &amp; Macready (1997)</p>
+  <hr class="title-rule" />
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2>1. The Framework — Four Objects</h2>
+
+  <p>
+    The paper studies <em>black-box optimisation</em>: an algorithm repeatedly
+    queries a cost function $f : \mathcal{X} \to \mathcal{Y}$ at distinct points
+    and observes the values, trying to minimise or characterise $f$ without access
+    to its analytic form. Everything is encoded in four objects.
+  </p>
+
+  <div class="objects-grid">
+    <div class="obj-card">
+      <div class="obj-name">1 — Sample</div>
+      <p>
+        $d_m = \{(x_1, y_1), \ldots, (x_m, y_m)\}$
+        — time-ordered set of $m$ <strong>distinct</strong> points queried so far
+        with their observed cost values.
+        Write $d_m^x = (x_1, \ldots, x_m)$ for the query sequence
+        and $d_m^y = (y_1, \ldots, y_m)$ for the cost-value sequence.
+      </p>
+    </div>
+    <div class="obj-card">
+      <div class="obj-name">2 — Algorithm</div>
+      <p>
+        $a : d \mapsto x \notin d^x$
+        — a deterministic map from the current sample to the next query,
+        required to be a <strong>previously unvisited</strong> point.
+        Covers hill climbing, simulated annealing, genetic algorithms,
+        tabu search — any method that doesn't use $f$'s analytic structure.
+      </p>
+    </div>
+    <div class="obj-card">
+      <div class="obj-name">3 — Performance</div>
+      <p>
+        Fully encoded by $P(d_m^y \mid f, m, a)$
+        — the probability that algorithm $a$ produces exactly cost-value
+        sequence $d_m^y$ on function $f$ after $m$ queries. Any scalar
+        measure $\Phi(d_m^y)$ (best-so-far, mean cost, etc.) is a
+        function of this distribution.
+      </p>
+    </div>
+    <div class="obj-card">
+      <div class="obj-name">4 — Prior</div>
+      <p>
+        $P(f)$ over $\mathcal{F} = \mathcal{Y}^{\mathcal{X}}$.
+        The space $\mathcal{F}$ has $|\mathcal{Y}|^{|\mathcal{X}|}$ elements —
+        finite but enormous. The uniform prior $P(f) = 1/|\mathcal{F}|$
+        represents complete ignorance about which problem we face.
+      </p>
+    </div>
+  </div>
+
+  <div class="env remark">
+    <span class="env-label">Remark</span>
+    <span class="env-title">(Why probability if the algorithm is deterministic?).</span>
+    Three reasons: (i) the framework extends cleanly to stochastic algorithms,
+    (ii) probability language provides a clean proof framework via sums over $\mathcal{F}$,
+    (iii) the prior $P(f)$ encodes our ignorance of which cost function we face,
+    even when $f$ is technically fixed.
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2>2. Main Theorem — Static NFL</h2>
+
+  <div class="env theorem">
+    <span class="env-label">Theorem 1</span>
+    <span class="env-title">(Wolpert–Macready, 1997 — Static NFL).</span>
+    For any two (possibly stochastic) black-box search algorithms $a_1$ and $a_2$,
+    any number of queries $m$, and any target cost-value sequence $d_m^y$:
+    $$\sum_{f \in \mathcal{F}} P(d_m^y \mid f,\, m,\, a_1)
+      \;=\;
+      \sum_{f \in \mathcal{F}} P(d_m^y \mid f,\, m,\, a_2).$$
+  </div>
+
+  <p>
+    <strong>What it actually says.</strong>
+    Fix any target cost-value sequence $d_m^y$ you would like to obtain.
+    The number of cost functions $f \in \mathcal{F}$ on which algorithm $a$
+    produces exactly that sequence is the <em>same</em> for every $a$.
+    Averaged over all cost functions, hill climbing, simulated annealing,
+    evolutionary algorithms, and uniform random search are <em>indistinguishable</em>.
+  </p>
+
+  <div class="env theorem">
+    <span class="env-label">Corollary</span>
+    <span class="env-title">(Equal expected performance).</span>
+    For any scalar performance measure $\Phi : (\mathcal{Y}^m) \to \mathbb{R}$:
+    $$\sum_{f \in \mathcal{F}} \mathbb{E}_a[\Phi(d_m^y)] \;\text{ is the same for every } a.$$
+    No algorithm achieves better <em>average</em> performance than any other
+    when averaging over all $f \in \mathcal{F}$.
+  </div>
+
+  <div class="takeaway">
+    <strong>Takeaway.</strong>
+    Any algorithm's gain on one class of problems is exactly offset by losses elsewhere.
+    The "skill" of a real-world optimiser is not intrinsic — it is an alignment
+    between the algorithm's inductive bias and the (non-uniform) prior $P(f)$
+    over problems actually encountered.
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2>3. Proof of Theorem 1</h2>
+
+  <p>
+    The proof is by induction on $m$ (the number of queries).
+    The key structural insight is to split the sum over $f \in \mathcal{F}$
+    into a product of independent sums over coordinates <em>inside</em>
+    and <em>outside</em> the already-queried set $d_m^x$.
+  </p>
+
+  <h3>Base case ($m = 1$)</h3>
+
+  <div class="env proof">
+    <span class="env-label">Base case.</span>
+    With no sample yet, algorithm $a$ makes its first query $x_1 = a(\emptyset)$.
+    This is a deterministic choice (given $a$).
+    The event "$d_1^y = (y_1)$" requires $f(x_1) = y_1$ —
+    fixing exactly <em>one</em> coordinate of $f$.
+    The remaining $|\mathcal{X}| - 1$ coordinates are unconstrained,
+    so exactly $|\mathcal{Y}|^{|\mathcal{X}|-1}$ functions in $\mathcal{F}$
+    satisfy $f(x_1) = y_1$. This count does not depend on which $x_1$
+    the algorithm chose, so
+    $$\sum_{f \in \mathcal{F}} P(d_1^y \mid f, 1, a) = |\mathcal{Y}|^{|\mathcal{X}|-1}
+      \quad \text{for every } a.$$
+    <div class="qed">□</div>
+  </div>
+
+  <h3>Inductive step</h3>
+
+  <p>
+    Assume the identity holds for $m$ queries. We prove it for $m+1$.
+  </p>
+
+  <div class="env proof">
+    <span class="env-label">Inductive step.</span>
+    Decompose:
+    $$P(d_{m+1}^y \mid f, m+1, a)
+      = P\!\bigl(d_{m+1}^y(m+1) \mid d_m^y, f, m+1, a\bigr)
+        \cdot P(d_m^y \mid f, m, a).$$
+    The next query $x_{m+1} = a(d_m^x, d_m^y)$ depends <em>only</em>
+    on the values of $f$ at points <strong>inside</strong> $d_m^x$,
+    which are already determined by $d_m^y$.
+    The new observation $y_{m+1} = f(x_{m+1})$ depends <em>only</em>
+    on $f$'s value at a point <strong>outside</strong> $d_m^x$
+    (since $a$ never revisits).
+
+    <p>
+      Split the sum over $\mathcal{F}$ into independent sums over the
+      "inside" coordinates (those in $d_m^x$) and the "outside" coordinates
+      (everything else):
+    </p>
+
+    $$\sum_{f \in \mathcal{F}} P(d_{m+1}^y \mid f, m+1, a)
+      = \underbrace{\sum_{f^{\mathrm{out}}}}_{|\mathcal{X}|-m-1 \text{ free coords}}
+        \!\!\Bigl[\mathbf{1}[f^{\mathrm{out}}(x_{m+1}) = y_{m+1}]\Bigr]
+        \cdot
+        \underbrace{\sum_{f^{\mathrm{in}}} P(d_m^y \mid f^{\mathrm{in}}, m, a)}_{=\;|\mathcal{Y}|^{|\mathcal{X}|-m}\text{ (IH)}}$$
+
+    The "outside" sum counts functions agreeing at $x_{m+1}$:
+    it equals $|\mathcal{Y}|^{|\mathcal{X}|-m-1}$ regardless of $a$.
+    The "inside" sum is the inductive hypothesis — also independent of $a$.
+    Their product $|\mathcal{Y}|^{|\mathcal{X}|-m-1} \cdot |\mathcal{Y}|^{|\mathcal{X}|-m}$
+    is independent of $a$.
+    <div class="qed">□</div>
+  </div>
+
+  <div class="env remark">
+    <span class="env-label">Core insight.</span>
+    Any deterministic algorithm merely picks coordinates of $f$ in some order.
+    Summing over all $f \in \mathcal{F}$ makes every ordering — and therefore
+    every algorithm — equivalent.
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2>4. The Geometric Picture</h2>
+
+  <p>
+    The theorem has an elegant geometric reformulation (Wolpert &amp; Macready, §IV).
+    Think of $\mathcal{F}$ as an index set with $|\mathcal{F}|$ elements and define:
+  </p>
+
+  <ul>
+    <li>
+      $\vec{v}_{d_m^y,\, a,\, m}(f) := P(d_m^y \mid f, m, a)$
+      — the <strong>behaviour vector</strong> of algorithm $a$ in $|\mathcal{F}|$-dimensional space.
+    </li>
+    <li>
+      $\vec{p}(f) := P(f)$
+      — the <strong>prior vector</strong> over cost functions.
+    </li>
+  </ul>
+
+  <p>
+    The expected performance of $a$ on sequence $d_m^y$ under prior $P$ is the
+    dot product:
+    $$P(d_m^y \mid m, a) \;=\; \vec{v}_{d_m^y,\, a,\, m} \cdot \vec{p}.$$
+  </p>
+
+  <div class="geo-diagram">
+    <svg width="360" height="200" viewBox="0 0 360 200" font-family="Palatino, Georgia, serif">
+      <!-- axes -->
+      <defs>
+        <marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#2D5172"/>
+        </marker>
+        <marker id="ah2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#888"/>
+        </marker>
+      </defs>
+      <!-- diagonal (uniform prior) -->
+      <line x1="60" y1="160" x2="280" y2="50" stroke="#C0C8D0" stroke-width="1.5" stroke-dasharray="5,4"/>
+      <text x="285" y="45" font-size="12" fill="#888">$\vec{1}$ (uniform prior)</text>
+      <!-- cone lines -->
+      <line x1="60" y1="160" x2="230" y2="30" stroke="#2E7D6F" stroke-width="1.3" stroke-dasharray="3,3"/>
+      <line x1="60" y1="160" x2="270" y2="90" stroke="#2E7D6F" stroke-width="1.3" stroke-dasharray="3,3"/>
+      <!-- algorithm vectors -->
+      <line x1="60" y1="160" x2="185" y2="60" stroke="#2D5172" stroke-width="2.2" marker-end="url(#ah)"/>
+      <text x="190" y="57" font-size="12" fill="#2D5172" font-style="italic">$\vec{v}_{a_1}$</text>
+      <line x1="60" y1="160" x2="245" y2="110" stroke="#C04040" stroke-width="2.2" marker-end="url(#ah)"/>
+      <text x="250" y="108" font-size="12" fill="#C04040" font-style="italic">$\vec{v}_{a_2}$</text>
+      <!-- prior vector -->
+      <line x1="60" y1="160" x2="155" y2="90" stroke="#B08020" stroke-width="2" marker-end="url(#ah)"/>
+      <text x="138" y="82" font-size="12" fill="#B08020" font-style="italic">$\vec{p}$</text>
+      <!-- origin -->
+      <circle cx="60" cy="160" r="3" fill="#2D5172"/>
+      <text x="44" y="175" font-size="11" fill="#555">origin</text>
+      <!-- NFL label -->
+      <text x="120" y="185" font-size="11" fill="#2E7D6F">
+        NFL: all $\vec{v}$ have the same projection onto $\vec{1}$
+      </text>
+    </svg>
+    <p style="margin:0;font-size:0.9rem">
+      Different algorithms correspond to different vectors $\vec{v}_{a,m}$ off the diagonal
+      (their projections onto $\vec{1}$ are equal — that is Theorem 1).
+      Algorithm $a$ performs well on prior $\vec{p}$ iff $\vec{v}_a$ points in a
+      similar direction to $\vec{p}$, i.e., iff <strong>the algorithm's bias is
+      aligned with the true prior</strong>.
+    </p>
+  </div>
+
+  <div class="env remark">
+    <span class="env-label">Remark</span>
+    <span class="env-title">(What good performance means geometrically).</span>
+    "Algorithm $a$ is good for problem class $P$" is not an intrinsic property of $a$.
+    It is the geometric statement $\vec{v}_a \cdot \vec{p} > \vec{v}_{a'} \cdot \vec{p}$,
+    which requires knowing $\vec{p}$. An algorithm can only outperform another
+    by exploiting a specific non-uniform prior over problems.
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2>5. Extensions and Scope</h2>
+
+  <h3>Stochastic algorithms</h3>
+
+  <p>
+    Replace deterministic $a$ with a hyperparameter $\sigma$ specifying
+    $P(x_{m+1} \mid d_m, \sigma)$. The proof carries through identically:
+    the "outside/inside" split still works because the stochastic choice
+    of $x_{m+1}$ still depends only on $d_m^y$ (the inside), not on any
+    outside coordinate.
+  </p>
+
+  <h3>Time-varying cost functions (Theorem 2)</h3>
+
+  <p>
+    If the cost function evolves by a bijection $T : \mathcal{F} \times \mathbb{N} \to \mathcal{F}$
+    (so $f_{i+1} = T_i(f_i)$), then averaging over <em>all bijections</em> $T$
+    (rather than all $f$) for a fixed initial $f_1$ again yields algorithm-independence.
+    The proof replaces the single sum over $f$ with a chain of sums over $T_1, T_2, \ldots$;
+    each inner sum counts bijections mapping a fixed function to a target — a constant
+    $(|\mathcal{F}|-1)!$ — independent of $a$.
+  </p>
+
+  <h3>When NFL holds beyond uniform $P(f)$</h3>
+
+  <p>
+    This is critical for defending against the objection
+    <em>"but real problems aren't uniformly distributed."</em>
+    NFL also holds for any prior $P(f)$ that is:
+  </p>
+  <ul>
+    <li>
+      <strong>Factorisable:</strong> $P(f) = \prod_{x \in \mathcal{X}} P'(f(x))$
+      — cost values at different domain points are i.i.d. under the prior.
+    </li>
+    <li>
+      <strong>Closed under permutations of rank-ordered cost values</strong>
+      — the prior does not prefer any particular ordering of outputs.
+    </li>
+  </ul>
+  <p>
+    Uniform $P(f)$ is <em>typical</em> among priors yielding NFL, not pathological.
+    The mere existence of structure in $P(f)$ is not enough to justify any particular
+    algorithm — the structure must be <strong>known and exploited</strong>.
+  </p>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2>6. Proof Summary</h2>
+
+  <div class="algorithm">
+    <div class="algorithm-header">Proof structure at a glance</div>
+    <ol>
+      <li>
+        <strong>Base case ($m=1$):</strong>
+        First query fixes one coordinate of $f$; $|\mathcal{Y}|^{|\mathcal{X}|-1}$
+        consistent functions — independent of which $x_1$ the algorithm chose.
+      </li>
+      <li>
+        <strong>Inductive step ($m \to m+1$):</strong>
+        Decompose $P(d_{m+1}^y \mid f, m+1, a)$ into
+        (next-observation) $\times$ (history probability).
+        Split sum over $f$ into "outside" coordinates (determines $y_{m+1}$, gives
+        $|\mathcal{Y}|^{|\mathcal{X}|-m-1}$, independent of $a$) and
+        "inside" coordinates (the induction hypothesis, independent of $a$).
+      </li>
+      <li>
+        <strong>Conclude:</strong>
+        Product is $|\mathcal{Y}|^{|\mathcal{X}|-m-1} \cdot |\mathcal{Y}|^{|\mathcal{X}|-m}$,
+        independent of $a_1$ vs. $a_2$.
+      </li>
+    </ol>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2>7. Formal Verification in Lean 4</h2>
+
+  <p>
+    The Lean 4 proof uses a continuation-based formulation that mirrors the inductive
+    structure above. The "inside/outside" split becomes the distinction between
+    the consistent-target count (inside, via <code>consistentEquivComplement</code>)
+    and the non-revisiting condition (outside, via <code>NonRevisiting</code>).
+  </p>
+
+<pre class="lean"><span class="cm">-- A possibly-stochastic search algorithm</span>
+<span class="kw">structure</span> <span class="ty">SearchAlg</span> (X Y : <span class="ty">Type</span>*) <span class="kw">where</span>
+  nextQuery : <span class="ty">List</span> (X × Y) → <span class="ty">PMF</span> X   <span class="cm">-- P(x_{m+1} | d_m, a)</span>
+
+<span class="cm">-- Non-revisiting encodes "a : d ↦ x ∉ d^x"</span>
+<span class="kw">def</span> <span class="fn">SearchAlg.NonRevisiting</span> (A : <span class="ty">SearchAlg</span> X Y) : <span class="ty">Prop</span> :=
+  ∀ (h : <span class="ty">List</span> (X × Y)) (x : X),
+    x ∈ h.map Prod.fst → A.nextQuery h x = <span class="num">0</span>
+
+<span class="cm">-- P(d_m^y | f, m, a): PMF over cost-value sequences</span>
+<span class="kw">noncomputable def</span> <span class="fn">observations</span> (A : <span class="ty">SearchAlg</span> X Y) (f : X → Y) (m : <span class="ty">Nat</span>)
+    : <span class="ty">PMF</span> (<span class="ty">List</span> Y) := (trace A f m).map (·.map Prod.snd)
+
+<span class="cm">-- Σ_f P(d_m^y | f, m, a): the sum in Theorem 1</span>
+<span class="kw">noncomputable def</span> <span class="fn">avgFuture</span> [<span class="ty">Fintype</span> (X → Y)]
+    (A : <span class="ty">SearchAlg</span> X Y) (h : <span class="ty">List</span> (X × Y)) (c : <span class="ty">List</span> Y) : ℝ≥<span class="num">0</span>∞ :=
+  ∑ f : X → Y, <span class="kw">if</span> Consistent f h
+    <span class="kw">then</span> observationsFrom A f h c.length c <span class="kw">else</span> <span class="num">0</span>
+
+<span class="cm">-- Key lemma: Σ_f P(d_m^y | f, m, a) = |Y|^(|X| - m), independent of a</span>
+<span class="kw">theorem</span> <span class="fn">avgFuture_eq_pow</span>
+    [<span class="ty">Fintype</span> X] [<span class="ty">Fintype</span> Y] [<span class="ty">DecidableEq</span> X]
+    (A : <span class="ty">SearchAlg</span> X Y) (hA : A.NonRevisiting)
+    (h : <span class="ty">List</span> (X × Y)) (hh : (h.map Prod.fst).Nodup)
+    (c : <span class="ty">List</span> Y) (hbound : h.length + c.length ≤ Fintype.card X) :
+    avgFuture A h c =
+      (Fintype.card Y ^ (Fintype.card X - (h.length + c.length)) : ℝ≥<span class="num">0</span>∞) := <span class="kw">by</span>
+  induction c generalizing h <span class="kw">with</span>
+  | nil   => <span class="cm">-- base: count consistent targets (= "inside" sum)</span>
+      simp [avgFuture, ← consistentCount_eq_pow_card hh]
+  | cons y ys ih =>
+      rw [avgFuture_cons]  <span class="cm">-- expand over next query</span>
+      <span class="cm">-- NonRevisiting kills seen x (= "outside" contributes constant)</span>
+      <span class="cm">-- IH closes fresh x; PMF sums to 1 finishes</span>
+      calc ∑' x, A.nextQuery h x * avgFuture A (h.concat (x, y)) ys
+          = ∑' x, A.nextQuery h x * K := tsum_congr (...)
+        _ = K := <span class="kw">by</span> rw [ENNReal.tsum_mul_right, PMF.tsum_coe]; simp
+
+<span class="cm">-- Theorem 1 statement</span>
+<span class="kw">theorem</span> <span class="fn">wolpert_macready</span> ... :
+    (∑ f : X → Y, observations A₁ f m c) =
+      ∑ f : X → Y, observations A₂ f m c :=
+  <span class="cm">-- avgFuture_eq_pow from empty history gives |Y|^(|X|-m) for both</span>
+  <span class="kw">by</span> rw [hsum₁, hsum₂, avgFuture_eq_pow A₁ h₁ .., avgFuture_eq_pow A₂ h₂ ..]</pre>
+
+  <p style="font-size:0.9rem">
+    Axiom check: <code>#print axioms wolpert_macready</code> yields only
+    <code>propext</code>, <code>Classical.choice</code>, <code>Quot.sound</code>.
+    No <code>sorry</code>.
+  </p>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2>8. Discussion and Common Objections</h2>
+
+  <h3>"But surely SA beats random search on real problems?"</h3>
+  <p>
+    Yes — because real problems are not uniformly distributed. SA's bias toward
+    local search aligns with the local-correlation structure of typical engineering
+    problems. NFL says this alignment must be <em>paid for</em> by SA's poor
+    performance on problems where local structure is misleading (deceptive functions,
+    needle-in-haystack). The advantage is real; the theorem says it cannot be free.
+  </p>
+
+  <h3>"Doesn't NFL contradict the existence of universal learners?"</h3>
+  <p>
+    No. PAC-style universal learners assume restricted hypothesis classes or
+    smoothness conditions — they encode a non-uniform prior. NFL is consistent with
+    all such results; it just says universality without such restrictions is impossible.
+  </p>
+
+  <h3>Head-to-head asymmetries are still possible</h3>
+  <p>
+    NFL does <em>not</em> preclude one algorithm beating another on a particular $f$.
+    The averages match because gains on some $f$ are exactly offset by losses on others.
+    Theorem 9 of Wolpert &amp; Macready rules out head-to-head asymmetries only when
+    the two algorithms' sampled point sets never overlap.
+  </p>
+
+  <div class="takeaway">
+    <strong>Key insight.</strong>
+    NFL is almost a counting argument: every $f$ appears once in the sum, every
+    algorithm visits coordinates in some order, end of story. The depth is
+    <em>conceptual</em> — it forces the field to abandon vague claims of algorithmic
+    superiority and articulate what prior is being assumed.
+  </div>
+
+  <div class="env remark">
+    <span class="env-label">Remark</span>
+    <span class="env-title">(Connection to supervised learning NFL).</span>
+    This result is the optimisation analogue of Wolpert's earlier NFL for
+    supervised learning (1996). Both say: averaged over all possible targets,
+    all learners/optimisers are equivalent. VC dimension, regularisation, and
+    structural risk minimisation are all ways of encoding inductive bias —
+    NFL tells you why that encoding is <em>mandatory</em>, not optional.
+  </div>
+
+  <div class="footnote">
+    D.H. Wolpert &amp; W.G. Macready, "No Free Lunch Theorems for Optimization,"
+    <em>IEEE Trans. Evolutionary Computation</em>, 1(1):67–82, 1997.
+    Lean 4 proof: <code>NFL/claude_full/WolpertMacready.lean</code> (also <code>NFL/codex_full/</code>).
+  </div>
+
+</div><!-- .page-wrap -->
+</body>
+</html>

@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Online Adversarial No-Free-Lunch — Notes</title>
+
+  <!-- KaTeX -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {
+      delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '\\[', right: '\\]', display: true},
+        {left: '$', right: '$', display: false},
+        {left: '\\(', right: '\\)', display: false}
+      ]
+    });"></script>
+
+  <style>
+    /* ── Base ─────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    :root {
+      --primary:   #2D5172;   /* dark slate blue  */
+      --teal:      #2E7D6F;   /* accent / takeaway green */
+      --red:       #C04040;   /* warning / emphasis red  */
+      --gold:      #B08020;   /* remark gold             */
+      --body-text: #2D3A4A;   /* near-black with blue tint */
+      --bg:        #FFFFFF;
+      --box-bg:    #F2F4F7;   /* light gray for theorem boxes */
+      --rule:      #C0C8D0;   /* thin divider color */
+      --code-kw:   #C04040;
+      --code-cm:   #888888;
+    }
+
+    html { font-size: 17px; }
+
+    body {
+      font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+      color: var(--body-text);
+      background: var(--bg);
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ── Top nav ──────────────────────────────────────────────────────── */
+    nav.topnav {
+      background: var(--primary);
+      padding: 0.55rem 2.5rem;
+      font-size: 0.82rem;
+      color: #fff;
+      letter-spacing: 0.02em;
+    }
+    nav.topnav a { color: #b8cfe0; text-decoration: none; }
+    nav.topnav a:hover { color: #fff; }
+    nav.topnav span { margin: 0 0.35em; color: #8aadc8; }
+
+    /* ── Layout ───────────────────────────────────────────────────────── */
+    .page-wrap {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 2.8rem 2.5rem 5rem;
+    }
+
+    /* ── Page title ───────────────────────────────────────────────────── */
+    h1.page-title {
+      font-size: 1.9rem;
+      color: var(--primary);
+      margin: 0 0 0.25rem;
+      font-weight: normal;
+    }
+    .subtitle {
+      font-size: 1.05rem;
+      color: var(--teal);
+      margin: 0 0 0.5rem;
+      font-style: italic;
+    }
+    .meta {
+      font-size: 0.82rem;
+      color: var(--code-cm);
+      margin-bottom: 2rem;
+    }
+    hr.title-rule {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 1.2rem 0 2rem;
+    }
+
+    /* ── Sections ─────────────────────────────────────────────────────── */
+    h2 {
+      font-size: 1.28rem;
+      color: var(--primary);
+      font-weight: bold;
+      margin: 2.8rem 0 0.7rem;
+      padding-bottom: 0.3rem;
+      border-bottom: 2px solid var(--primary);
+    }
+    h3 {
+      font-size: 1.05rem;
+      color: var(--primary);
+      font-weight: bold;
+      margin: 1.6rem 0 0.4rem;
+    }
+
+    /* ── Numbered environments ────────────────────────────────────────── */
+    .env {
+      background: var(--box-bg);
+      border-radius: 4px;
+      padding: 1rem 1.25rem;
+      margin: 1.2rem 0;
+      position: relative;
+    }
+    .env-label {
+      font-weight: bold;
+      color: var(--primary);
+      margin-right: 0.35em;
+    }
+    .env-title {
+      font-style: italic;
+      color: var(--body-text);
+      margin-right: 0.35em;
+    }
+
+    /* Definition — left accent bar in teal */
+    .env.definition { border-left: 4px solid var(--teal); }
+    .env.definition .env-label { color: var(--teal); }
+
+    /* Theorem — left accent bar in primary blue */
+    .env.theorem { border-left: 4px solid var(--primary); }
+
+    /* Lemma — slightly lighter blue bar */
+    .env.lemma { border-left: 4px solid #4a7aab; }
+    .env.lemma .env-label { color: #4a7aab; }
+
+    /* Remark — gold bar */
+    .env.remark { border-left: 4px solid var(--gold); background: #faf6ec; }
+    .env.remark .env-label { color: var(--gold); }
+
+    /* Proof — no bar, lighter background, ends with □ */
+    .env.proof {
+      background: #f8f9fa;
+      border-left: 4px solid var(--rule);
+    }
+    .env.proof .env-label { color: var(--body-text); font-style: italic; font-weight: bold; }
+    .qed {
+      text-align: right;
+      font-size: 1.1rem;
+      color: var(--primary);
+      margin-top: 0.4rem;
+    }
+
+    /* ── Algorithm box ────────────────────────────────────────────────── */
+    .algorithm {
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      padding: 0.85rem 1.2rem;
+      margin: 1.2rem 0;
+      font-size: 0.95rem;
+    }
+    .algorithm-header {
+      font-weight: bold;
+      color: var(--primary);
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 0.4rem;
+      margin-bottom: 0.6rem;
+    }
+    .algorithm ol, .algorithm ul { margin: 0.3rem 0; padding-left: 1.6rem; }
+    .algorithm li { margin: 0.25rem 0; }
+
+    /* ── Inline code / math ───────────────────────────────────────────── */
+    code {
+      font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+      font-size: 0.87em;
+      background: #eef0f3;
+      padding: 0.1em 0.35em;
+      border-radius: 3px;
+      color: var(--code-kw);
+    }
+
+    pre.lean {
+      font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+      font-size: 0.83rem;
+      background: #1e1e2e;
+      color: #cdd6f4;
+      padding: 1rem 1.2rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      line-height: 1.55;
+      margin: 1rem 0;
+    }
+    /* Lean syntax highlighting via spans */
+    pre.lean .kw  { color: #cba6f7; }  /* keywords: def, theorem, by … */
+    pre.lean .fn  { color: #89b4fa; }  /* function names */
+    pre.lean .cm  { color: #585b70; font-style: italic; } /* comments */
+    pre.lean .st  { color: #a6e3a1; }  /* strings / booleans */
+    pre.lean .num { color: #fab387; }  /* numbers */
+    pre.lean .ty  { color: #94e2d5; }  /* types */
+
+    /* ── Takeaway block ───────────────────────────────────────────────── */
+    .takeaway {
+      background: #eef6f4;
+      border-left: 4px solid var(--teal);
+      padding: 0.75rem 1.2rem;
+      margin: 1.2rem 0;
+      color: var(--teal);
+      font-style: italic;
+      border-radius: 0 4px 4px 0;
+    }
+    .takeaway strong { font-style: normal; }
+
+    /* ── Regular text ─────────────────────────────────────────────────── */
+    p { margin: 0.7rem 0; line-height: 1.72; }
+    ul, ol { line-height: 1.72; padding-left: 1.8rem; }
+    li { margin: 0.2rem 0; }
+    strong { color: var(--primary); }
+
+    /* ── Footnote ─────────────────────────────────────────────────────── */
+    .footnote {
+      font-size: 0.82rem;
+      color: var(--code-cm);
+      border-top: 1px solid var(--rule);
+      margin-top: 3rem;
+      padding-top: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Top navigation ─────────────────────────────────────────────────── -->
+<nav class="topnav">
+  <a href="#">DSC 190/291</a>
+  <span>/</span>
+  <a href="#">No-Free-Lunch</a>
+  <span>/</span>
+  Online Adversarial NFL
+</nav>
+
+<div class="page-wrap">
+
+  <!-- ── Page header ──────────────────────────────────────────────────── -->
+  <h1 class="page-title">Online Adversarial No-Free-Lunch</h1>
+  <p class="subtitle">Week — No-Free-Lunch Theorems</p>
+  <p class="meta">DSC 190/291 Learning Theory &nbsp;·&nbsp; Tianhao Wang &nbsp;·&nbsp; UCSD Spring 2026</p>
+  <hr class="title-rule" />
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2>1. Setting</h2>
+
+  <p>
+    We study a learner that receives labelled examples <em>one at a time</em> and must
+    predict the label of a new point <em>before</em> seeing its true label.
+    An adversary simultaneously chooses a target function to maximise the learner's mistakes.
+  </p>
+
+  <div class="env definition">
+    <span class="env-label">Definition 1</span>
+    <span class="env-title">(Domain and queries).</span>
+    Let $\mathcal{X}$ be any set (the <em>domain</em>).
+    A <strong>query sequence</strong> is a finite list
+    $x_1, x_2, \ldots, x_T \in \mathcal{X}$.
+    We say the sequence is <strong>non-repeating</strong> if all $x_t$ are distinct.
+  </div>
+
+  <div class="env definition">
+    <span class="env-label">Definition 2</span>
+    <span class="env-title">(Deterministic online learner).</span>
+    A <strong>deterministic online learner</strong> is a function
+    $$A : \underbrace{\bigl(\mathcal{X} \times \{0,1\}\bigr)^*}_{\text{history}} \;\times\; \mathcal{X} \;\longrightarrow\; \{0,1\}.$$
+    At round $t$, having observed the labelled history
+    $h_t = \bigl((x_1, f(x_1)), \ldots, (x_{t-1}, f(x_{t-1}))\bigr)$,
+    the learner predicts $A(h_t,\, x_t)$.
+  </div>
+
+  <p>
+    Define the <strong>history up to round $t$</strong> against target $f$ on
+    query sequence $\mathbf{x} = (x_1,\ldots,x_T)$ as
+    $$\mathrm{hist}(f, \mathbf{x}, t) \;=\; \bigl((x_1, f(x_1)),\, \ldots,\, (x_{t-1}, f(x_{t-1}))\bigr).$$
+  </p>
+
+  <div class="env definition">
+    <span class="env-label">Definition 3</span>
+    <span class="env-title">(Mistake at round $t$).</span>
+    Learner $A$ makes a <strong>mistake at round $t$</strong> against target $f$
+    on query sequence $\mathbf{x}$ if
+    $$A\!\bigl(\mathrm{hist}(f,\mathbf{x},t),\; x_t\bigr) \;\neq\; f(x_t).$$
+    We write this as $\mathrm{MistakeAt}(A, f, \mathbf{x}, t)$.
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2>2. Main Theorem</h2>
+
+  <div class="env theorem">
+    <span class="env-label">Theorem 1</span>
+    <span class="env-title">(Online Adversarial No-Free-Lunch).</span>
+    For any deterministic online learner $A$ and any non-repeating query sequence
+    $\mathbf{x} = (x_1, \ldots, x_T)$, there exists a target function
+    $f : \mathcal{X} \to \{0,1\}$ such that $A$ makes a mistake at <em>every</em> round:
+    $$\forall\, t \in \{1, \ldots, T\},\quad \mathrm{MistakeAt}(A,\, f,\, \mathbf{x},\, t).$$
+  </div>
+
+  <div class="takeaway">
+    <strong>Takeaway.</strong>
+    No deterministic online learner can avoid all mistakes against an adversarial target —
+    even on a sequence of distinct queries.
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2>3. Proof</h2>
+
+  <p>
+    The proof is by <strong>induction on the query sequence</strong>
+    $\mathbf{x}$. The key idea is to construct the adversarial target
+    <em>incrementally</em>: define the label at $x_1$ to fool $A$, then
+    treat the remaining rounds as a fresh problem for a shifted learner.
+  </p>
+
+  <h3>Induction structure</h3>
+
+  <div class="env proof">
+    <span class="env-label">Proof.</span>
+    We prove: for every learner $A$ and every non-repeating sequence $\mathbf{x}$,
+    there exists $f$ that fools $A$ at every round.
+    The proof is by induction on $|\mathbf{x}|$.
+  </div>
+
+  <h3>Base case: empty sequence</h3>
+
+  <div class="env proof">
+    <span class="env-label">Base case.</span>
+    If $\mathbf{x} = ()$, there are no rounds. The constant function $f \equiv 0$
+    satisfies the claim vacuously.
+    <div class="qed">□</div>
+  </div>
+
+  <h3>Inductive step: $\mathbf{x} = (x_1, x_2, \ldots, x_T)$</h3>
+
+  <p>
+    Assume the claim holds for every learner and every non-repeating sequence of
+    length $T - 1$. We handle a non-repeating sequence of length $T$.
+    Since $\mathbf{x}$ is non-repeating, $x_1 \notin \{x_2, \ldots, x_T\}$.
+  </p>
+
+  <p><strong>Step 1. Adversarial label for round 1.</strong>
+  Define
+  $$b \;:=\; \lnot\, A\!\bigl([], x_1\bigr).$$
+  By construction, $A([], x_1) \neq b$, so any target with $f(x_1) = b$
+  fools $A$ at round 1.
+  </p>
+
+  <p><strong>Step 2. Shifted learner.</strong>
+  Define the <em>shifted learner</em>
+  $$A'(h, y) \;:=\; A\!\bigl((x_1, b) \mathbin{::} h,\; y\bigr).$$
+  Intuitively, $A'$ is $A$ pretending that round 1 already happened with label $b$.
+  </p>
+
+  <p><strong>Step 3. Apply the inductive hypothesis.</strong>
+  The tail $(x_2, \ldots, x_T)$ is non-repeating (it inherits this from $\mathbf{x}$).
+  By the induction hypothesis applied to $A'$ and $(x_2, \ldots, x_T)$, there exists
+  $g : \mathcal{X} \to \{0,1\}$ such that
+  $$\forall\, t \in \{1, \ldots, T-1\},\quad
+    A'\!\bigl(\mathrm{hist}(g,\,(x_2,\ldots,x_T),\,t),\; x_{t+1}\bigr)
+    \;\neq\; g(x_{t+1}).$$
+  </p>
+
+  <p><strong>Step 4. Combined target.</strong>
+  Define
+  $$f(y) \;:=\; \begin{cases} b & \text{if } y = x_1, \\ g(y) & \text{otherwise.} \end{cases}$$
+  </p>
+
+  <div class="env lemma">
+    <span class="env-label">Lemma 1</span>
+    <span class="env-title">(History agreement).</span>
+    For every $t \geq 1$,
+    $$\mathrm{hist}(f,\,\mathbf{x},\,t+1)
+      \;=\; (x_1, b) \mathbin{::} \mathrm{hist}(g,\,(x_2,\ldots,x_T),\,t).$$
+  </div>
+
+  <div class="env proof">
+    <span class="env-label">Proof of Lemma 1.</span>
+    The history $\mathrm{hist}(f, \mathbf{x}, t+1)$ consists of the pairs
+    $(x_i, f(x_i))$ for $i = 1, \ldots, t$. The first pair is
+    $(x_1, f(x_1)) = (x_1, b)$.
+    For $i \geq 2$, since $x_1 \notin \{x_2,\ldots,x_T\}$, we have
+    $x_i \neq x_1$, so $f(x_i) = g(x_i)$.
+    Thus the tail of the history is $\mathrm{hist}(g, (x_2,\ldots,x_T), t)$.
+    <div class="qed">□</div>
+  </div>
+
+  <h3>Verification</h3>
+
+  <p><strong>Round 1.</strong>
+  The history is empty, the query is $x_1$, and $f(x_1) = b$.
+  By construction of $b$,
+  $$A\!\bigl([], x_1\bigr) \;\neq\; b \;=\; f(x_1). \checkmark$$
+  </p>
+
+  <p><strong>Round $t+1$ (for $t \geq 1$).</strong>
+  The query is $x_{t+1}$. By Lemma 1, the history is
+  $(x_1,b) :: \mathrm{hist}(g,(x_2,\ldots,x_T),t)$.
+  Therefore
+  $$A\!\bigl(\mathrm{hist}(f,\mathbf{x},t+1),\; x_{t+1}\bigr)
+    \;=\; A\!\bigl((x_1,b) :: \mathrm{hist}(g,(x_2,\ldots,x_T),t),\; x_{t+1}\bigr)
+    \;=\; A'(\mathrm{hist}(g,(x_2,\ldots,x_T),t),\; x_{t+1}).$$
+  Since $x_{t+1} \neq x_1$ (as $\mathbf{x}$ is non-repeating), we have $f(x_{t+1}) = g(x_{t+1})$.
+  By the inductive hypothesis on $g$,
+  $$A'\!\bigl(\mathrm{hist}(g,(x_2,\ldots,x_T),t),\; x_{t+1}\bigr) \;\neq\; g(x_{t+1}) = f(x_{t+1}). \checkmark$$
+  </p>
+
+  <div class="env proof">
+    <span class="env-label">Conclusion.</span>
+    The target $f$ fools $A$ at every round $t \in \{1,\ldots,T\}$.
+    <div class="qed">□</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2>4. Proof Summary</h2>
+
+  <div class="algorithm">
+    <div class="algorithm-header">Adversarial target construction (informal algorithm)</div>
+    <ol>
+      <li>Given learner $A$ and non-repeating sequence $(x_1,\ldots,x_T)$.</li>
+      <li>Set $b := \lnot A([], x_1)$.</li>
+      <li>Define shifted learner: $A'(h, y) := A((x_1, b) :: h,\; y)$.</li>
+      <li>Recursively find $g$ that fools $A'$ on $(x_2,\ldots,x_T)$.</li>
+      <li>Output $f(y) := b$ if $y = x_1$, else $g(y)$.</li>
+    </ol>
+  </div>
+
+  <div class="env remark">
+    <span class="env-label">Remark.</span>
+    The target $f$ is constructed without knowing the full sequence in advance:
+    the adversary only needs to know $A$'s prediction on the <em>current</em> query
+    and the history it has seen. The recursion produces $f$ one coordinate at a time.
+  </div>
+
+  <div class="env remark">
+    <span class="env-label">Remark</span>
+    <span class="env-title">(Why non-repeating?).</span>
+    The non-repeating condition is used in two places:
+    (i) to ensure $x_1 \notin \{x_2,\ldots,x_T\}$, which is needed for the history
+    agreement (Lemma 1); (ii) to pass a valid non-repeating sequence to the inductive
+    hypothesis. Without it, $A$ could query the same point twice — but a consistent
+    adversary would simply reuse the already-assigned label.
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2>5. Formal Statement in Lean 4</h2>
+
+  <p>
+    The following is the machine-verified statement and proof sketch.
+    The full Lean 4 proof lives in
+    <code>NFL/claude_full/OnlineAdversarial.lean</code>.
+  </p>
+
+<pre class="lean"><span class="cm">-- Deterministic online learner</span>
+<span class="kw">abbrev</span> <span class="fn">OnlineLearner</span> (X : <span class="ty">Type</span>*) := <span class="ty">List</span> (X × <span class="ty">Bool</span>) → X → <span class="ty">Bool</span>
+
+<span class="cm">-- History seen before round t</span>
+<span class="kw">def</span> <span class="fn">historyTo</span> (f : X → <span class="ty">Bool</span>) (xs : <span class="ty">List</span> X) (t : <span class="ty">Nat</span>) : <span class="ty">List</span> (X × <span class="ty">Bool</span>) :=
+  (xs.take t).map <span class="kw">fun</span> x => (x, f x)
+
+<span class="cm">-- Mistake predicate</span>
+<span class="kw">def</span> <span class="fn">MistakeAt</span> (A : <span class="fn">OnlineLearner</span> X) (f : X → <span class="ty">Bool</span>) (xs : <span class="ty">List</span> X) (t : <span class="ty">Nat</span>) :=
+  ∀ h : t < xs.length,
+    A (historyTo f xs t) (xs.get ⟨t, h⟩) ≠ f (xs.get ⟨t, h⟩)
+
+<span class="cm">-- Main theorem</span>
+<span class="kw">theorem</span> <span class="fn">exists_adversarial_target</span>
+    (A : <span class="fn">OnlineLearner</span> X) (xs : <span class="ty">List</span> X) (hxs : xs.Nodup) :
+    ∃ f : X → <span class="ty">Bool</span>, ∀ t, <span class="fn">MistakeAt</span> A f xs t := <span class="kw">by</span>
+  induction xs generalizing A <span class="kw">with</span>
+  | nil  => <span class="cm">-- vacuously true</span>
+      exact ⟨<span class="kw">fun</span> _ => <span class="st">false</span>, <span class="kw">fun</span> t h => absurd h (by simp)⟩
+  | cons x xs ih =>
+      <span class="kw">let</span> b  := !A [] x                              <span class="cm">-- adversarial label</span>
+      <span class="kw">let</span> A' := <span class="kw">fun</span> h y => A ((x, b) :: h) y         <span class="cm">-- shifted learner</span>
+      obtain ⟨g, hg⟩ := ih A' (nodup_tail hxs)       <span class="cm">-- inductive hypothesis</span>
+      <span class="kw">let</span> f  := <span class="kw">fun</span> y => <span class="kw">if</span> y = x <span class="kw">then</span> b <span class="kw">else</span> g y   <span class="cm">-- combined target</span>
+      exact ⟨f, <span class="cm">⟨round-0 and round-(t+1) cases⟩</span>⟩</pre>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <h2>6. Further Discussion</h2>
+
+  <h3>Connection to the PAC and batch settings</h3>
+  <p>
+    Theorem 1 is an <em>adversarial</em> result: the adversary picks the target
+    <em>after</em> seeing the learner. In the PAC setting the target is fixed
+    before learning begins, which is why sample-efficient learning is possible
+    for restricted hypothesis classes (finite VC dimension). Theorem 1 shows
+    that if we allow the adversary to adapt, no learner can survive even on
+    a finite query sequence.
+  </p>
+
+  <h3>Computational interpretation</h3>
+  <p>
+    The adversarial construction is explicit and efficient:
+    at each step $t$ the adversary computes $b = \lnot A(h_t, x_t)$
+    in time proportional to one evaluation of $A$, then sets $f(x_t) = b$.
+    No exponential search is required.
+  </p>
+
+  <div class="takeaway">
+    <strong>Key insight.</strong>
+    The proof is a reduction: fooling a learner on $T$ rounds reduces to
+    fooling a shifted learner on $T-1$ rounds. The shift operation
+    $(x_1, b) :: h$ "commits" the adversary's first move
+    while leaving all future choices free.
+  </div>
+
+  <div class="footnote">
+    Lean 4 proof verified with Mathlib (v4.29.1, Lean 4).
+    See <code>NFL/claude_full/OnlineAdversarial.lean</code> and
+    <code>NFL/codex_full/OnlineAdversarial.lean</code> for the machine-checked proofs.
+  </div>
+
+</div><!-- .page-wrap -->
+</body>
+</html>

@@ -1,0 +1,17 @@
+\contentsline {section}{\numberline {1}Overview}{2}{section.1}%
+\contentsline {section}{\numberline {2}Theorem 1: Online Adversarial NFL}{2}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Setting}{2}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Statement}{2}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Proof}{3}{subsection.2.3}%
+\contentsline {section}{\numberline {3}Theorem 2: Wolpert--Macready (Histogram Form)}{4}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Setting}{4}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Statement}{4}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Proof}{4}{subsection.3.3}%
+\contentsline {paragraph}{Key object.}{4}{section*.2}%
+\contentsline {paragraph}{Conclusion of Theorem\nobreakspace {}\ref {thm:wm}.}{5}{section*.3}%
+\contentsline {section}{\numberline {4}Theorem 3: Batch Stochastic NFL}{6}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Setting}{6}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Statement}{6}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Proof}{6}{subsection.4.3}%
+\contentsline {paragraph}{Special case $m = 0$.}{6}{section*.4}%
+\contentsline {paragraph}{Case $m \ge 1$.}{7}{section*.5}%
