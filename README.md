@@ -34,9 +34,12 @@ Project/
     ├── NFL.lean                     # root module — imports all three theorems
     └── NFL/
         ├── Basic.lean               # shared header (currently empty)
-        ├── OnlineAdversarial.lean   # Theorem 1
-        ├── WolpertMacready.lean     # Theorem 2
-        └── BatchStochastic.lean     # Theorem 3
+        └── codex_full/              # completed proofs (0 sorry) — see Status below
+            ├── OnlineAdversarial.lean   # Theorem 1
+            ├── WolpertMacready.lean     # Theorem 2
+            ├── BatchStochastic.lean     # Theorem 3
+            ├── PROOF_WRITEUP.md         # proof write-up & roadmap
+            └── ROADMAP.md
 ```
 
 ## Build
@@ -56,15 +59,21 @@ lake build              # compile the project (~60 s cold, ~0 s warm)
 
 ## Status
 
-Theorem statements compile. Proof bodies are all `sorry`:
+All three theorems are **fully proved, 0 `sorry`**, in [`NFL/NFL/codex_full/`](NFL/NFL/codex_full/):
 
-| File | Sorries | Notes |
+| File | Main theorem | Lines |
 |---|---|---|
-| `OnlineAdversarial.lean` | 1 | `exists_adversarial_target` |
-| `WolpertMacready.lean` | 2 | `wolpert_macready`, `wolpert_macready_avg` (corollary) |
-| `BatchStochastic.lean` | 1 | `batch_stochastic_NFL` |
+| [`OnlineAdversarial.lean`](NFL/NFL/codex_full/OnlineAdversarial.lean) | `exists_adversarial_target` | 82 |
+| [`WolpertMacready.lean`](NFL/NFL/codex_full/WolpertMacready.lean) | `wolpert_macready` (+ `wolpert_macready_avg` corollary) | 898 |
+| [`BatchStochastic.lean`](NFL/NFL/codex_full/BatchStochastic.lean) | `batch_stochastic_NFL` | 893 |
+
+**Proved:** the theorem statements above, exactly as displayed in [Theorems](#theorems) — e.g. `batch_stochastic_NFL` derives, for any deterministic learner `A` and `2m ≤ |X|`, a distribution `D` with a zero-risk target *and* `failureProb D A m (1/8) ≥ 1/7`.
+
+**Assumed:** standard typeclass hypotheses on the ambient types — `[Fintype X]`, `[Fintype Y]`, `[DecidableEq X]` throughout; `[Nonempty X]` and `[MeasurableSingletonClass X]` additionally for `batch_stochastic_NFL` (nonemptiness is essential — see `no_probability_measure_empty_prod_bool` in the same file); plus the algorithm-side hypotheses stated in each theorem (`Nodup` query sequence for Theorem 1, `NonRevisiting` algorithms for Theorem 2, deterministic `Learner` for Theorem 3). No extra axioms are introduced.
 
 Imports are narrowed: each theorem file loads only the Mathlib modules it needs, keeping `lake build` to under a minute.
+
+For the proof write-up/roadmap and the agent workflow used to produce these proofs, see [`PROOF_WRITEUP.md`](NFL/NFL/codex_full/PROOF_WRITEUP.md), [`ROADMAP.md`](NFL/NFL/codex_full/ROADMAP.md), and [`SKILL.md`](NFL/SKILL.md). For a narrative walkthrough, see [`full_presentation_note.html`](NFL/presentation/full_presentation_note.html) (report) or [`full_presentation_slides.html`](NFL/presentation/full_presentation_slides.html) (slides).
 
 ## References
 

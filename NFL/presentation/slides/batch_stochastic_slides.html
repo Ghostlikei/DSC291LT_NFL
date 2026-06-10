@@ -151,6 +151,7 @@
     .box.lemma     { border-left: 4px solid #4a7aab; }
     .box.remark    { border-left: 4px solid var(--gold); background: #faf6ec; }
     .box.key       { border-left: 4px solid var(--red); background: #fdf2f2; }
+    .box.corollary { border-left: 4px solid #7a4aab; background: #f5f2fa; }
 
     .box-label {
       font-weight: bold;
@@ -162,6 +163,7 @@
     .box.lemma .box-label { color: #4a7aab; }
     .box.remark .box-label { color: var(--gold); }
     .box.key .box-label { color: var(--red); }
+    .box.corollary .box-label { color: #7a4aab; }
 
     h2.slide-title {
       font-size: 1.35rem;
@@ -262,7 +264,7 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════ SLIDE 3: Setting -->
+  <!-- ═══════════════════════════════════════════ SLIDE 3: Definitions -->
   <div class="slide">
     <div class="slide-header">Setting — Batch Binary Classification</div>
     <div class="slide-body">
@@ -272,24 +274,25 @@
         <div class="col">
           <div class="box definition">
             <span class="box-label">Learner.</span>
-            A <strong>deterministic learner</strong> maps training data to a hypothesis:
+            A <strong>deterministic learner</strong> maps a labeled sample to a hypothesis:
             $$A : (\mathcal{X} \times \{0,1\})^* \to (\mathcal{X} \to \{0,1\})$$
           </div>
           <div class="box definition" style="margin-top:0.5rem">
-            <span class="box-label">Risk.</span>
-            0-1 loss under distribution $D$:
-            $$R(D, h) = \mathbb{E}_{(x,y)\sim D}[\mathbf{1}[h(x)\neq y]]$$
+            <span class="box-label">Population risk.</span>
+            $$L_D(h) \;:=\; \mathbb{P}_{(x,y)\sim D}[h(x) \neq y]$$
           </div>
         </div>
         <div class="col">
           <div class="box definition">
-            <span class="box-label">Failure probability.</span>
-            $$\delta(D, A, m) = \Pr_{S \sim D^m}\!\bigl[R(D, A(S)) \geq \tfrac{1}{8}\bigr]$$
+            <span class="box-label">Realizability.</span>
+            $D$ is <strong>realizable</strong> if $\exists\, f$ with $L_D(f) = 0$
+            — $D$ is supported on the graph of $f$.
           </div>
           <div class="box definition" style="margin-top:0.5rem">
-            <span class="box-label">Realizability.</span>
-            $D$ is <strong>realizable</strong> if there exists $f$ with $R(D, f) = 0$,
-            i.e., $D$ is supported on the graph of $f$.
+            <span class="box-label">PAC learnability.</span>
+            $A$ PAC learns $\mathcal{H}$ if for every $\varepsilon, \delta > 0$ there
+            exists $n$ such that for all realizable $D$:
+            $\mathbb{P}_{S\sim D^n}[L_D(A(S)) > \varepsilon] \leq \delta$.
           </div>
         </div>
       </div>
@@ -313,32 +316,33 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════ SLIDE 5: Theorem -->
+  <!-- ═══════════════════════════════════════════ SLIDE 5: Theorem statement -->
   <div class="slide">
     <div class="slide-header">Main Theorem</div>
     <div class="slide-body">
       <h2 class="slide-title">Theorem (Batch Stochastic NFL)</h2>
 
       <div class="box theorem">
-        Let $\mathcal{X}$ be a finite domain with $|\mathcal{X}| \geq 2m$.
-        For any deterministic learner $A$, there exists a <strong>realizable</strong>
-        distribution $D$ on $\mathcal{X} \times \{0,1\}$ such that:
-        $$\delta(D,\, A,\, m)
-          \;=\; \Pr_{S \sim D^m}\!\bigl[R(D,\, A(S)) \geq \tfrac{1}{8}\bigr]
+        Let $\mathcal{X}$ be any domain. For every deterministic learner $A$ and every
+        $n &lt; |\mathcal{X}|/2$, there exists a <strong>realizable</strong> distribution
+        $D$ on $\mathcal{X} \times \{0,1\}$ such that:
+        $$\mathbb{P}_{S \sim D^n}\!\bigl[L_D(A(S)) \geq \tfrac{1}{8}\bigr]
           \;\geq\; \frac{1}{7}.$$
       </div>
 
-      <div class="takeaway" style="margin-top:0.7rem">
-        <strong>Takeaway.</strong>
-        No matter how clever the learner, there is always a realizable distribution
-        for which it fails with probability $\geq 1/7$.
+      <div class="box remark" style="margin-top:0.6rem">
+        <span class="box-label">Quantifier order.</span>
+        $A$ and $n$ are fixed <em>first</em>. Then the adversary picks a $2n$-point subset,
+        a bad labeling, and the realizable distribution — all <em>before</em> the sample is drawn.
+        This is an <strong>oblivious</strong> adversary (contrast with the adaptive adversary
+        in the Online Adversarial setting).
       </div>
 
-      <p style="margin-top:0.55rem;font-size:0.9rem">
-        <strong>Contrast with Wolpert–Macready:</strong> here the target is fixed
-        before sampling (not adversarially adaptive). The difficulty comes from
-        the information-theoretic blindspot of seeing only $m$ of $2m$ points.
-      </p>
+      <div class="takeaway" style="margin-top:0.6rem">
+        <strong>Takeaway.</strong>
+        Without structural restrictions on $\mathcal{H}$, no learner can succeed uniformly
+        across all realizable distributions.
+      </div>
     </div>
     <div class="slide-footer">
       <div class="footer-accent"></div>
@@ -351,7 +355,7 @@
     <div class="slide-header">Batch Stochastic No-Free-Lunch</div>
     <div class="slide-body">
       <div class="section-label">Part III</div>
-      <div class="section-title">Proof</div>
+      <div class="section-title">Proof (Four Steps)</div>
     </div>
     <div class="slide-footer">
       <div class="footer-accent" style="background:rgba(255,255,255,0.3)"></div>
@@ -359,31 +363,43 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════ SLIDE 7: m=0 Case -->
+  <!-- ═══════════════════════════════════════════ SLIDE 7: Step 1 — Averaging construction -->
   <div class="slide">
-    <div class="slide-header">Proof — Zero-Sample Case</div>
+    <div class="slide-header">Proof — Step 1: Averaging Construction</div>
     <div class="slide-body">
-      <h2 class="slide-title">Case 1: $m = 0$</h2>
+      <h2 class="slide-title">Step 1: Build a Family of $2^{2n}$ Distributions</h2>
 
-      <div class="box key">
-        <span class="box-label">Strategy.</span>
-        With no training data, $A([])$ is a fixed hypothesis — fool it at a single point.
+      <p>
+        Fix $A$ and $n$. Choose $2n$ distinct points $x_1, \ldots, x_{2n} \in \mathcal{X}$.
+        For each labeling $b = (b_1,\ldots,b_{2n}) \in \{0,1\}^{2n}$, define:
+      </p>
+
+      <div class="cols" style="margin-top:0.4rem">
+        <div class="col">
+          <div class="box definition">
+            <span class="box-label">Target.</span>
+            $f_b : \mathcal{X} \to \{0,1\}$ with $f_b(x_i) = b_i$ for $i \in [2n]$.
+          </div>
+        </div>
+        <div class="col">
+          <div class="box definition">
+            <span class="box-label">Distribution.</span>
+            $D_b\bigl((x_i, b_i)\bigr) = \dfrac{1}{2n}$ — uniform on the labeled graph
+            $\{(x_i, b_i)\}_{i=1}^{2n}$.
+          </div>
+        </div>
       </div>
 
-      <ul style="margin-top:0.55rem">
-        <li>Pick any $x_0 \in \mathcal{X}$; set $b := \lnot A([])(x_0)$.</li>
-        <li>Define $D := \mathrm{Dirac}(x_0, b)$ — a point mass at the adversarial pair.</li>
-        <li>$D$ is realizable: the constant $b$ has risk 0 under $D$.</li>
-        <li>The unique 0-sample training set is $[]$; $A([])$ predicts $\lnot b$ at $x_0$,
-            so $R(D, A([])) = 1 \geq 1/8$.</li>
-        <li>The $D^0$-measure of the failure event equals 1, so $\delta(D, A, 0) = 1 \geq 1/7$.</li>
-      </ul>
-
-      <div class="takeaway" style="margin-top:0.6rem">
-        <strong>Lean 4:</strong> <code>batch_stochastic_NFL_zero</code> —
-        uses <code>Measure.dirac</code>, <code>integral_dirac</code>,
-        <code>Measure.pi</code> of the empty product = 1.
+      <div class="box key" style="margin-top:0.5rem">
+        <span class="box-label">Key observation.</span>
+        Every $D_b$ is <strong>realizable</strong>: $L_{D_b}(f_b) = 0$ by construction.
       </div>
+
+      <p style="font-size:0.9rem;margin-top:0.4rem">
+        Now let $B = (B_1,\ldots,B_{2n})$ be a uniformly random labeling.
+        Sampling $S \sim D_B^n$ amounts to: draw $B$, then draw $n$ indices $J_1,\ldots,J_n$
+        i.i.d. uniformly from $[2n]$, independently of $B$.
+      </p>
     </div>
     <div class="slide-footer">
       <div class="footer-accent"></div>
@@ -391,33 +407,42 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════ SLIDE 8: Setup m>=1 -->
+  <!-- ═══════════════════════════════════════════ SLIDE 8: Step 2 — V(S)/U(S) -->
   <div class="slide">
-    <div class="slide-header">Proof — Setup for $m \geq 1$</div>
+    <div class="slide-header">Proof — Step 2: Observed and Unseen Sets</div>
     <div class="slide-body">
-      <h2 class="slide-title">Case 2: $m \geq 1$ — Choosing the Support</h2>
+      <h2 class="slide-title">Step 2: Lemma 1 — Unseen Points Are Unpredictable</h2>
 
-      <p>
-        Since $2m \leq |\mathcal{X}|$, pick a finset $C \subseteq \mathcal{X}$ with $|C| = 2m$.
-      </p>
-
-      <div class="box definition">
-        <span class="box-label">Graph distribution.</span>
-        For any labelling $f : C \to \{0,1\}$, define
-        $$D_f \;:=\; \mathrm{Uniform}\!\bigl(\{(x, f(x)) : x \in C\}\bigr)$$
-        — the uniform distribution on the graph of $f$ over $C$.
-        This is realizable (risk of $f$ under $D_f$ is 0).
+      <div class="cols">
+        <div class="col">
+          <div class="box definition">
+            <span class="box-label">$V(S)$ (observed).</span>
+            $\{i \in [2n] : x_i \text{ appears in } S\}$.
+            Since $|S| = n$, we have $|V(S)| \leq n$.
+          </div>
+          <div class="box definition" style="margin-top:0.45rem">
+            <span class="box-label">$U(S)$ (unseen).</span>
+            $[2n] \setminus V(S)$.
+            Since $|V(S)| \leq n$, we get $|U(S)| \geq n$.
+          </div>
+        </div>
+        <div class="col">
+          <div class="box key">
+            <span class="box-label">Independence.</span>
+            Condition on $S$. The learner $A(S) = \hat{h}$ is fixed.
+            For any $i \in U(S)$: $B_i$ was <em>never revealed</em> in $S$,
+            so it is still a fair coin independent of $\hat{h}(x_i)$.
+            $$\mathbb{E}\!\bigl[\mathbf{1}[\hat{h}(x_i) \neq B_i] \mid S\bigr] = \frac{1}{2}.$$
+          </div>
+        </div>
       </div>
 
-      <p style="margin-top:0.55rem">
-        Let $\mathcal{F} = \{0,1\}^C$ (all $2^{2m}$ labellings) and
-        $\Omega = C^m$ (all training samples of size $m$ from $C$).
-      </p>
-
-      <div class="box key" style="margin-top:0.45rem">
-        <span class="box-label">Goal.</span>
-        Show: some $f \in \mathcal{F}$ has combinatorial failure rate
-        $\dfrac{|\{S \in \Omega : R(D_f, A(S)) \geq 1/8\}|}{|\Omega|} \;\geq\; \dfrac{1}{7}$.
+      <div class="box lemma" style="margin-top:0.5rem">
+        <span class="box-label">Lemma 1.</span>
+        $$\mathbb{E}[L_{D_B}(A(S)) \mid S]
+          = \frac{1}{2n}\sum_{i=1}^{2n}\mathbb{E}[\mathbf{1}[\hat{h}(x_i)\neq B_i]\mid S]
+          \;\geq\; \frac{|U(S)|}{2n}\cdot\frac{1}{2}
+          \;\geq\; \frac{n}{2n}\cdot\frac{1}{2} = \frac{1}{4}.$$
       </div>
     </div>
     <div class="slide-footer">
@@ -426,30 +451,32 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════ SLIDE 9: Lower Bound -->
+  <!-- ═══════════════════════════════════════════ SLIDE 9: Step 2 concluded -->
   <div class="slide">
-    <div class="slide-header">Proof — Fixed-Sample Lower Bound</div>
+    <div class="slide-header">Proof — Step 2 Concluded</div>
     <div class="slide-body">
-      <h2 class="slide-title">Lemma: Average Risk $\geq \tfrac{1}{4}$ per Sample</h2>
+      <h2 class="slide-title">Average Population Loss $\geq \tfrac{1}{4}$</h2>
 
-      <div class="box lemma">
-        <span class="box-label">Lemma.</span>
-        For any fixed sample $S = (z_1,\ldots,z_m) \in \Omega$:
-        $$\frac{1}{|\mathcal{F}|}\sum_{f \in \mathcal{F}}
-            R(D_f,\, A(\mathrm{sample}(S,f))) \;\geq\; \frac{1}{4}.$$
+      <p>
+        Taking expectation over $S$ and $B$, the tower law gives:
+      </p>
+
+      $$\mathbb{E}_B\,\mathbb{E}_{S \sim D_B^n}\!\bigl[L_{D_B}(A(S))\bigr]
+        \;=\; \mathbb{E}\!\bigl[\mathbb{E}[L_{D_B}(A(S))\mid S]\bigr]
+        \;\geq\; \frac{1}{4}.$$
+
+      <div class="box key" style="margin-top:0.7rem">
+        <span class="box-label">Core insight.</span>
+        A sample of size $n$ from a $2n$-point domain
+        always misses at least $n$ points (pigeonhole).
+        The labels at those unseen points are <em>statistically independent</em> of
+        everything the learner observes — so no algorithm can predict them better than chance.
       </div>
 
-      <p style="margin-top:0.5rem"><strong>Proof sketch:</strong></p>
-      <ul style="font-size:0.9rem">
-        <li>$S$ sees at most $m$ distinct points from $C$ (with $|C| = 2m$).</li>
-        <li>Let $U$ = unseen points: $|U| \geq m$.</li>
-        <li>For each unseen $z \in U$: pairing $f$ with its label-flip $f^z$ at $z$
-            shows loss$(f) +$ loss$(f^z) = 1$ at point $z$.
-            <strong>Total contribution to average risk $\geq 1/(2m)$ per unseen point.</strong>
-        </li>
-        <li>With $|U| \geq m$ unseen points:
-            average risk $\geq m \cdot \frac{1}{2m} \cdot \frac{1}{2} = \frac{1}{4}$.</li>
-      </ul>
+      <div class="takeaway" style="margin-top:0.6rem">
+        The obstacle is purely <strong>information-theoretic</strong>, not computational.
+        No property of $A$ is used beyond the fact that it maps samples to hypotheses.
+      </div>
     </div>
     <div class="slide-footer">
       <div class="footer-accent"></div>
@@ -457,43 +484,36 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════ SLIDE 10: Double Counting -->
+  <!-- ═══════════════════════════════════════════ SLIDE 10: Step 3 — Probabilistic method -->
   <div class="slide">
-    <div class="slide-header">Proof — Double-Counting Contradiction</div>
+    <div class="slide-header">Proof — Step 3: Probabilistic Method</div>
     <div class="slide-body">
-      <h2 class="slide-title">Contradiction via Double-Counting (Fubini)</h2>
+      <h2 class="slide-title">Step 3: Extract a Single Bad Labeling</h2>
 
       <p>
-        Suppose for contradiction that every $f \in \mathcal{F}$ has failure rate $< 1/7$.
-        Consider the double average:
-        $$\Sigma := \frac{1}{|\mathcal{F}||\Omega|}
-          \sum_{f \in \mathcal{F}} \sum_{S \in \Omega} R(D_f, A(S))$$
+        We know:
+        $$\frac{1}{2^{2n}} \sum_{b \in \{0,1\}^{2n}} \mathbb{E}_{S \sim D_b^n}\!\bigl[L_{D_b}(A(S))\bigr]
+          \;\geq\; \frac{1}{4}.$$
       </p>
 
-      <div class="cols" style="margin-top:0.4rem">
-        <div class="col">
-          <div class="box key" style="font-size:0.88rem">
-            <span class="box-label">Upper bound.</span>
-            If failure rate $< 1/7$: on bad samples use bound $\leq 1$,
-            on good samples use bound $< 1/8$:
-            $$\Sigma < \frac{1}{7} + \frac{6}{7}\cdot\frac{1}{8}
-              = \frac{8+6}{56} = \frac{14}{56} = \frac{1}{4}$$
-          </div>
-        </div>
-        <div class="col">
-          <div class="box lemma" style="font-size:0.88rem">
-            <span class="box-label">Lower bound.</span>
-            Swap $f$ and $S$ (Fubini), then apply the fixed-sample lemma:
-            $$\Sigma \;=\; \frac{1}{|\Omega|}\sum_S
-                \underbrace{\frac{1}{|\mathcal{F}|}\sum_f R_f(S)}_{\geq\,1/4}
-              \;\geq\; \frac{1}{4}$$
-          </div>
-        </div>
+      <div class="box theorem" style="margin-top:0.5rem">
+        <span class="box-label">Probabilistic method.</span>
+        If the average over all $b$ is $\geq \tfrac{1}{4}$, there must exist at least one $b^*$
+        such that
+        $$\mathbb{E}_{S \sim D_{b^*}^n}\!\bigl[L_{D_{b^*}}(A(S))\bigr] \;\geq\; \frac{1}{4}.$$
+        Set $D = D_{b^*}$.
       </div>
 
-      <div class="takeaway" style="margin-top:0.5rem;font-size:0.88rem">
-        Contradiction: $\Sigma < 1/4$ and $\Sigma \geq 1/4$ cannot both hold.
-        So some $f^* \in \mathcal{F}$ must have failure rate $\geq 1/7$.
+      <ul style="margin-top:0.6rem;font-size:0.93rem">
+        <li>$D = D_{b^*}$ is realizable: $L_D(f_{b^*}) = 0$.</li>
+        <li>We have $\mathbb{E}_{S\sim D^n}[L_D(A(S))] \geq \tfrac{1}{4}$.</li>
+        <li>But we need a <em>constant-probability</em> failure event,
+            not just a bound on the expectation.</li>
+      </ul>
+
+      <div class="takeaway" style="margin-top:0.5rem">
+        Step 4 converts the expected-loss bound into a probability bound
+        using a Markov-style argument.
       </div>
     </div>
     <div class="slide-footer">
@@ -502,36 +522,48 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════ SLIDE 11: Bridge -->
+  <!-- ═══════════════════════════════════════════ SLIDE 11: Step 4 — Markov -->
   <div class="slide">
-    <div class="slide-header">Proof — Measure-Theoretic Bridge</div>
+    <div class="slide-header">Proof — Step 4: Markov Conversion</div>
     <div class="slide-body">
-      <h2 class="slide-title">Bridging to the Continuous Setting</h2>
+      <h2 class="slide-title">Step 4: From Expected Loss to Failure Probability</h2>
 
-      <p>
-        We have a combinatorial failure rate over $\Omega = C^m$; we need
-        a measure-theoretic statement about $D_{f^*}^m$.
-      </p>
+      <p>Let $Z = L_D(A(S)) \in [0,1]$ and $p = \mathbb{P}(Z \geq \tfrac{1}{8})$.</p>
 
-      <div class="box lemma">
-        <span class="box-label">Measure Bridge Lemma.</span>
-        The combinatorial failure rate $\leq$ the measure-theoretic failure probability:
-        $$\frac{|\{S \in \Omega : R(D_f, A(S)) \geq 1/8\}|}{|\Omega|}
-          \;\leq\;
-          \Pr_{S \sim D_f^m}\!\bigl[R(D_f, A(S)) \geq \tfrac{1}{8}\bigr]$$
+      <div class="cols" style="margin-top:0.5rem;align-items:stretch">
+        <div class="col">
+          <div class="box key" style="height:100%">
+            <span class="box-label">Bound $\mathbb{E}[Z]$ from above.</span>
+            <p style="margin-top:0.3rem;font-size:0.9rem">
+              Decompose: on the event $Z &lt; \tfrac{1}{8}$ use $Z \leq \tfrac{1}{8}$;
+              on the event $Z \geq \tfrac{1}{8}$ use $Z \leq 1$:
+            </p>
+            $$\mathbb{E}[Z] \;\leq\; (1-p)\cdot\tfrac{1}{8} + p \cdot 1
+              = \tfrac{1}{8} + \tfrac{7p}{8}.$$
+          </div>
+        </div>
+        <div class="col">
+          <div class="box theorem" style="height:100%">
+            <span class="box-label">Solve for $p$.</span>
+            <p style="margin-top:0.3rem;font-size:0.9rem">
+              We have $\mathbb{E}[Z] \geq \tfrac{1}{4}$, so:
+            </p>
+            $$\frac{1}{4} \;\leq\; \frac{1}{8} + \frac{7p}{8}
+              \;\;\Longrightarrow\;\; p \;\geq\; \frac{1}{7}.$$
+            <p style="margin-top:0.4rem;font-size:0.9rem">
+              Therefore
+              $\;\mathbb{P}_{S\sim D^n}\!\bigl[L_D(A(S)) \geq \tfrac{1}{8}\bigr]
+              \geq \tfrac{1}{7}.\;\square$
+            </p>
+          </div>
+        </div>
       </div>
 
-      <ul style="margin-top:0.5rem;font-size:0.9rem">
-        <li>Bad combinatorial samples embed injectively into the $D_f^m$-failure event
-            via the support-trace embedding.</li>
-        <li>Each embedded sample gets mass $= 1/|\Omega|$ under $D_f^m$
-            (by uniformity of $D_f$ on the $|C| = 2m$ graph points).</li>
-        <li>Measure is preserved: $\Pr_{D_f^m}[\text{failure event}] \geq$ failure rate.</li>
-      </ul>
-
-      <div class="takeaway" style="margin-top:0.5rem;font-size:0.88rem">
-        Pick $f^*$ from Step 3. Then $D_{f^*}$ is realizable and
-        $\delta(D_{f^*}, A, m) \geq 1/7$.
+      <div class="box remark" style="margin-top:0.55rem;font-size:0.88rem">
+        <span class="box-label">Why $\tfrac{1}{8}$ and $\tfrac{1}{7}$?</span>
+        Any threshold $\varepsilon &lt; \tfrac{1}{4}$ works; the resulting failure bound is
+        $\tfrac{1/4 - \varepsilon}{1 - \varepsilon}$. Setting $\varepsilon = \tfrac{1}{8}$
+        gives $\tfrac{1/8}{7/8} = \tfrac{1}{7}$.
       </div>
     </div>
     <div class="slide-footer">
@@ -549,28 +581,28 @@
       <ul class="step-list">
         <li>
           <span class="step-num">1</span>
-          <span><strong>$m = 0$:</strong> Dirac at a single point labelled adversarially.</span>
+          <span><strong>Averaging construction.</strong>
+            Fix $A$, $n$. For each $b \in \{0,1\}^{2n}$, define $D_b$ = uniform on the graph of
+            $f_b$ over $2n$ chosen points. Every $D_b$ is realizable.</span>
         </li>
         <li>
           <span class="step-num">2</span>
-          <span><strong>Pick support</strong> $C \subseteq \mathcal{X}$ with $|C| = 2m$;
-            define $D_f$ = uniform on graph of $f$ over $C$.</span>
+          <span><strong>Unseen set argument (Lemma 1).</strong>
+            $|V(S)| \leq n$, so $|U(S)| \geq n$. For each $i \in U(S)$, $B_i$ is an
+            independent fair coin given $S$: contribution to expected loss $= \tfrac{1}{2}$.
+            Total: $\mathbb{E}[L_{D_B}(A(S))] \geq \tfrac{n}{2n}\cdot\tfrac{1}{2} = \tfrac{1}{4}$.</span>
         </li>
         <li>
           <span class="step-num">3</span>
-          <span><strong>Fixed-sample lower bound:</strong>
-            for any $S$, average risk over all $f \geq 1/4$
-            (unseen points contribute independent label pairs).</span>
+          <span><strong>Probabilistic method.</strong>
+            Average $\geq \tfrac{1}{4}$ implies some $b^*$ has
+            $\mathbb{E}_{S\sim D_{b^*}^n}[L_{D_{b^*}}(A(S))] \geq \tfrac{1}{4}$.</span>
         </li>
         <li>
           <span class="step-num">4</span>
-          <span><strong>Contradiction:</strong> if all failure rates $< 1/7$,
-            double-counting gives $\Sigma < 1/4$ and $\Sigma \geq 1/4$.</span>
-        </li>
-        <li>
-          <span class="step-num">5</span>
-          <span><strong>Bridge:</strong> combinatorial failure rate
-            $\leq$ measure-theoretic failure probability via support-trace embedding.</span>
+          <span><strong>Markov conversion.</strong>
+            $Z \in [0,1]$, $\mathbb{E}[Z] \geq \tfrac{1}{4}$:
+            $\;\tfrac{1}{4} \leq \tfrac{1}{8} + \tfrac{7p}{8} \implies p \geq \tfrac{1}{7}$.</span>
         </li>
       </ul>
     </div>
@@ -580,7 +612,44 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════ SLIDE 13: Section — Lean 4 -->
+  <!-- ═══════════════════════════════════════════ SLIDE 13: Corollary -->
+  <div class="slide">
+    <div class="slide-header">Corollary — Infinite VC Dimension</div>
+    <div class="slide-body">
+      <h2 class="slide-title">Corollary: VCdim $= \infty$ $\Rightarrow$ Not PAC Learnable</h2>
+
+      <div class="box corollary">
+        <span class="box-label">Corollary 1.</span>
+        If $\mathrm{VCdim}(\mathcal{H}) = \infty$, then $\mathcal{H}$ is not realizably PAC learnable
+        (and hence not agnostically PAC learnable).
+      </div>
+
+      <p style="margin-top:0.55rem"><strong>Proof sketch:</strong></p>
+      <ul style="font-size:0.9rem">
+        <li>Fix any algorithm $A$ and sample size $n$.</li>
+        <li>Since $\mathrm{VCdim}(\mathcal{H}) = \infty$, there exists a set
+            $C = \{x_1,\ldots,x_{2n}\}$ <strong>shattered</strong> by $\mathcal{H}$.</li>
+        <li>Apply Theorem 1 to these $2n$ points: $\exists\, D$ with
+            $\mathbb{P}_{S\sim D^n}[L_D(A(S)) \geq \tfrac{1}{8}] \geq \tfrac{1}{7}$.</li>
+        <li>Since $C$ is shattered, $\exists\, h^* \in \mathcal{H}$ matching the bad labeling:
+            $L_D(h^*) = 0$, so $D$ is realizable by $\mathcal{H}$.</li>
+        <li>With $\varepsilon = \tfrac{1}{8}$, $\delta = \tfrac{1}{7}$: PAC condition fails for every $n$.
+            $\square$</li>
+      </ul>
+
+      <div class="takeaway" style="margin-top:0.5rem;font-size:0.88rem">
+        <strong>Fundamental Theorem of PAC Learning:</strong>
+        $\mathcal{H}$ is PAC learnable $\iff$ $\mathrm{VCdim}(\mathcal{H}) &lt; \infty$.
+        NFL provides the hard direction.
+      </div>
+    </div>
+    <div class="slide-footer">
+      <div class="footer-accent"></div>
+      <span class="slide-num">13</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 14: Section — Lean 4 -->
   <div class="slide section-divider">
     <div class="slide-header">Batch Stochastic No-Free-Lunch</div>
     <div class="slide-body">
@@ -589,28 +658,33 @@
     </div>
     <div class="slide-footer">
       <div class="footer-accent" style="background:rgba(255,255,255,0.3)"></div>
-      <span class="slide-num" style="color:rgba(255,255,255,0.4)">13</span>
+      <span class="slide-num" style="color:rgba(255,255,255,0.4)">14</span>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════ SLIDE 14: Lean Definitions -->
+  <!-- ═══════════════════════════════════════════ SLIDE 15: Lean Code -->
   <div class="slide">
-    <div class="slide-header">Lean 4 — Core Definitions</div>
+    <div class="slide-header">Lean 4 — Core Statements</div>
     <div class="slide-body">
-      <h2 class="slide-title">Core Lean 4 Definitions</h2>
+      <h2 class="slide-title">Key Lean 4 Definitions and Theorem</h2>
 
-<pre class="lean"><span class="cm">-- Deterministic learning algorithm</span>
-<span class="kw">abbrev</span> <span class="ty">Learner</span> (X : <span class="ty">Type</span>*) := <span class="ty">List</span> (X × <span class="ty">Bool</span>) → (X → <span class="ty">Bool</span>)
-
-<span class="cm">-- Measure-theoretic risk</span>
+<pre class="lean"><span class="cm">-- Population risk  L_D(h) = ∫ 1[h(x) ≠ y] dD</span>
 <span class="kw">noncomputable def</span> <span class="fn">risk</span> (D : <span class="ty">Measure</span> (X × <span class="ty">Bool</span>)) (h : X → <span class="ty">Bool</span>) : ℝ :=
   ∫ xy, (<span class="kw">if</span> h xy.1 = xy.2 <span class="kw">then</span> <span class="num">0</span> <span class="kw">else</span> <span class="num">1</span>) ∂D
 
-<span class="cm">-- Failure probability</span>
-<span class="kw">noncomputable def</span> <span class="fn">failureProb</span>
-    (D : <span class="ty">Measure</span> (X × <span class="ty">Bool</span>)) (A : <span class="ty">Learner</span> X) (m : <span class="ty">Nat</span>) (ε : ℝ) : ℝ :=
-  (<span class="ty">Measure</span>.pi (<span class="kw">fun</span> _ : <span class="ty">Fin</span> m => D))
-    {S | ε ≤ risk D (A (<span class="ty">List</span>.ofFn S))}.toReal
+<span class="cm">-- D_b = uniform on graph of f_b (Step 1)</span>
+<span class="kw">noncomputable def</span> <span class="fn">graphPMF</span> (C : <span class="ty">Finset</span> X) (f : X → <span class="ty">Bool</span>) (hC : C.Nonempty)
+    : <span class="ty">PMF</span> (X × <span class="ty">Bool</span>) :=
+  <span class="ty">PMF</span>.uniformOfFinset (graphFinset C f) (graphFinset_nonempty f hC)
+
+<span class="cm">-- Step 2: average over labelings gives risk ≥ 1/4 (Lemma 1)</span>
+<span class="kw">theorem</span> <span class="fn">sum_abstractRisk_ge</span> (S : <span class="ty">Fin</span> m → Z) ... :
+    (<span class="ty">Fintype</span>.card (<span class="ty">Fin</span> m → Z) : ℝ) / <span class="num">4</span> ≤
+      ∑ f : Z → <span class="ty">Bool</span>, abstractRisk e f (A (abstractSampleList e f S))
+
+<span class="cm">-- Step 3+4: some labeling has failure probability ≥ 1/7</span>
+<span class="kw">theorem</span> <span class="fn">exists_abstractFailureRate_ge</span> (C : <span class="ty">Finset</span> X) ... :
+    ∃ fZ : Z → <span class="ty">Bool</span>, (<span class="num">1</span> : ℝ) / <span class="num">7</span> ≤ abstractFailureRate e A fZ m
 
 <span class="cm">-- Main theorem</span>
 <span class="kw">theorem</span> <span class="fn">batch_stochastic_NFL</span>
@@ -618,42 +692,11 @@
     (A : <span class="ty">Learner</span> X) (m : <span class="ty">Nat</span>) (hm : <span class="num">2</span> * m ≤ <span class="ty">Fintype</span>.card X) :
     ∃ D : <span class="ty">Measure</span> (X × <span class="ty">Bool</span>), <span class="ty">IsProbabilityMeasure</span> D ∧
       (∃ f : X → <span class="ty">Bool</span>, risk D f = <span class="num">0</span>) ∧
-      (<span class="num">1</span> : ℝ) / <span class="num">7</span> ≤ failureProb D A m (<span class="num">1</span> / <span class="num">8</span>) := ...</pre>
+      (<span class="num">1</span> : ℝ) / <span class="num">7</span> ≤ failureProb D A m (<span class="num">1</span> / <span class="num">8</span>)</pre>
 
       <p style="font-size:0.85rem;margin-top:0.35rem">
-        Axioms: only <code>propext</code>, <code>Classical.choice</code>, <code>Quot.sound</code>.
+        Axiom check: only <code>propext</code>, <code>Classical.choice</code>, <code>Quot.sound</code>. No <code>sorry</code>.
       </p>
-    </div>
-    <div class="slide-footer">
-      <div class="footer-accent"></div>
-      <span class="slide-num">14</span>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════ SLIDE 15: Lean Key Lemmas -->
-  <div class="slide">
-    <div class="slide-header">Lean 4 — Key Intermediate Lemmas</div>
-    <div class="slide-body">
-      <h2 class="slide-title">Key Lemmas in Lean 4</h2>
-
-<pre class="lean"><span class="cm">-- Uniform distribution on labelled graph of f over C</span>
-<span class="kw">noncomputable def</span> <span class="fn">graphPMF</span> (C : <span class="ty">Finset</span> X) (f : X → <span class="ty">Bool</span>) (hC : C.Nonempty)
-    : <span class="ty">PMF</span> (X × <span class="ty">Bool</span>) :=
-  <span class="ty">PMF</span>.uniformOfFinset (graphFinset C f) (graphFinset_nonempty f hC)
-
-<span class="cm">-- Fixed-sample lower bound</span>
-<span class="kw">theorem</span> <span class="fn">sum_abstractRisk_ge</span> (S : <span class="ty">Fin</span> m → Z) ... :
-    ((<span class="ty">Fintype</span>.card (<span class="ty">Fin</span> m → Z) : ℝ) / <span class="num">4</span>) ≤
-      ∑ f : Z → <span class="ty">Bool</span>, abstractRisk e f (A (abstractSampleList e f S)) := ...
-
-<span class="cm">-- Contradiction: some f has failure rate ≥ 1/7</span>
-<span class="kw">theorem</span> <span class="fn">exists_abstractFailureRate_ge</span> (C : <span class="ty">Finset</span> X) ... :
-    ∃ fZ : Z → <span class="ty">Bool</span>, (<span class="num">1</span> : ℝ) / <span class="num">7</span> ≤ abstractFailureRate e A fZ m := ...
-
-<span class="cm">-- Measure bridge</span>
-<span class="kw">theorem</span> <span class="fn">abstractFailureRate_le_failureProb_graph</span> ... :
-    abstractFailureRate e A fZ m ≤
-      failureProb (graphPMF C fX hC).toMeasure A m (<span class="num">1</span> / <span class="num">8</span>) := ...</pre>
     </div>
     <div class="slide-footer">
       <div class="footer-accent"></div>
@@ -668,25 +711,28 @@
       <h2 class="slide-title">What We Showed</h2>
 
       <ul style="margin-bottom:0.8rem">
-        <li>For any learner $A$ on a domain with $|\mathcal{X}| \geq 2m$, there
-            exists a realizable $D$ with $\delta(D, A, m) \geq 1/7$.</li>
-        <li>The hard distribution is uniform on a graph of size $2m$
-            — the unseen half is the source of failure.</li>
-        <li>The proof uses a clean double-counting (Fubini) argument:
-            average-risk-per-sample $\geq 1/4$ contradicts failure-rate-$<1/7$.</li>
+        <li>For any learner $A$ on a domain with $|\mathcal{X}| > 2n$, there exists
+            a realizable $D$ with $\mathbb{P}_{S\sim D^n}[L_D(A(S))\geq\tfrac{1}{8}]\geq\tfrac{1}{7}$.</li>
+        <li>The hard distribution is uniform on $2n$ points — the unseen half (at least $n$ points)
+            is the source of failure.</li>
+        <li>Proof: averaging construction → $V(S)/U(S)$ independence argument →
+            probabilistic method → Markov conversion.</li>
+        <li>Corollary: $\mathrm{VCdim}(\mathcal{H}) = \infty \Rightarrow$ not PAC learnable
+            (hard direction of the Fundamental Theorem).</li>
         <li>Machine-verified in Lean 4 / Mathlib.</li>
       </ul>
 
       <div class="box remark">
-        <span class="box-label">Why $|\mathcal{X}| \geq 2m$?</span>
-        We need a support of size $2m$ so that any training sample of size $m$
-        leaves at least $m$ unseen points. This is the minimal condition for the
-        fixed-sample lower bound.
+        <span class="box-label">Contrast with Online Adversarial NFL.</span>
+        Online: adaptive adversary flips label after seeing each prediction.
+        Batch: oblivious adversary fixes $D$ before any sample.
+        Both conclude the same thing, via different mechanisms:
+        adaptive fooling vs. information-theoretic blindspot.
       </div>
 
-      <div class="takeaway" style="margin-top:0.6rem">
+      <div class="takeaway" style="margin-top:0.55rem">
         <strong>Three NFL theorems, one message.</strong>
-        Without inductive bias — online adversarial, stochastic search, or batch PAC —
+        Without inductive bias — online, search, or batch PAC —
         learning is impossible in the worst case.
       </div>
     </div>

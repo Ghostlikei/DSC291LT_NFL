@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Three Faces of No-Free-Lunch — Full Notes</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {
+      delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '\\[', right: '\\]', display: true},
+        {left: '$', right: '$', display: false},
+        {left: '\\(', right: '\\)', display: false}
+      ]
+    });"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary:   #2D5172;
+      --teal:      #2E7D6F;
+      --red:       #C04040;
+      --gold:      #B08020;
+      --body-text: #2D3A4A;
+      --bg:        #FFFFFF;
+      --box-bg:    #F2F4F7;
+      --rule:      #C0C8D0;
+      --max-w:     860px;
+    }
+
+    html, body {
+      background: #edf0f4;
+      font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+      color: var(--body-text);
+      line-height: 1.65;
+    }
+
+    .page {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 3rem 2.5rem 5rem;
+      background: var(--bg);
+      box-shadow: 0 2px 24px rgba(0,0,0,0.10);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .doc-header {
+      border-bottom: 3px solid var(--primary);
+      padding-bottom: 1.2rem;
+      margin-bottom: 2rem;
+    }
+    .doc-tag { font-size: 0.8rem; color: var(--teal); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.3rem; }
+    .doc-title { font-size: 2rem; color: var(--primary); font-weight: normal; line-height: 1.2; margin-bottom: 0.35rem; }
+    .doc-sub { font-size: 0.98rem; color: #556; font-style: italic; margin-bottom: 0.6rem; }
+    .doc-meta { font-size: 0.83rem; color: #888; line-height: 1.8; }
+
+    /* ── Part dividers ── */
+    .part {
+      background: var(--primary);
+      color: #fff;
+      padding: 0.7rem 1.4rem;
+      margin: 2.8rem 0 1.4rem;
+      border-radius: 4px;
+    }
+    .part-label { font-size: 0.75rem; color: rgba(255,255,255,0.55); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.15rem; }
+    .part-title { font-size: 1.35rem; font-weight: normal; }
+
+    /* ── Sections ── */
+    h2 { font-size: 1.18rem; color: var(--primary); font-weight: bold; margin: 1.6rem 0 0.5rem; }
+    h3 { font-size: 1rem; color: var(--primary); font-weight: bold; margin: 1.1rem 0 0.35rem; }
+    p { margin: 0.45rem 0; font-size: 0.94rem; }
+    ul, ol { padding-left: 1.5rem; margin: 0.3rem 0; }
+    li { margin: 0.2rem 0; font-size: 0.94rem; }
+    strong { color: var(--primary); }
+
+    /* ── Boxes ── */
+    .box {
+      background: var(--box-bg);
+      border-radius: 4px;
+      padding: 0.6rem 1rem;
+      margin: 0.5rem 0;
+      font-size: 0.91rem;
+    }
+    .box.theorem    { border-left: 4px solid var(--primary); }
+    .box.definition { border-left: 4px solid var(--teal); }
+    .box.lemma      { border-left: 4px solid #4a7aab; }
+    .box.remark     { border-left: 4px solid var(--gold); background: #faf6ec; }
+    .box.key        { border-left: 4px solid var(--red); background: #fdf2f2; }
+    .box.proof      { border-left: 4px solid var(--rule); background: #f8f9fa; }
+
+    .box-label { font-weight: bold; color: var(--primary); margin-right: 0.3em; font-size: 0.88rem; }
+    .box.definition .box-label { color: var(--teal); }
+    .box.lemma .box-label      { color: #4a7aab; }
+    .box.remark .box-label     { color: var(--gold); }
+    .box.key .box-label        { color: var(--red); }
+
+    .takeaway {
+      background: #eef6f4;
+      border-left: 4px solid var(--teal);
+      padding: 0.45rem 1rem;
+      margin: 0.6rem 0;
+      color: var(--teal);
+      font-style: italic;
+      border-radius: 0 4px 4px 0;
+      font-size: 0.9rem;
+    }
+    .takeaway strong { font-style: normal; color: var(--teal); }
+
+    /* ── Tables ── */
+    table { width: 100%; border-collapse: collapse; font-size: 0.86rem; margin: 0.6rem 0; }
+    th { background: var(--primary); color: #fff; padding: 0.35rem 0.65rem; font-weight: normal; font-size: 0.8rem; text-align: left; }
+    td { padding: 0.3rem 0.65rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td { background: var(--box-bg); }
+    td:first-child { font-weight: bold; color: var(--primary); }
+
+    /* ── Lean code ── */
+    pre.lean {
+      font-family: "JetBrains Mono", "Fira Code", monospace;
+      font-size: 0.73rem;
+      background: #1e1e2e;
+      color: #cdd6f4;
+      padding: 0.7rem 1rem;
+      border-radius: 5px;
+      overflow-x: auto;
+      line-height: 1.45;
+      margin: 0.5rem 0;
+    }
+    pre.lean .kw  { color: #cba6f7; }
+    pre.lean .fn  { color: #89b4fa; }
+    pre.lean .ty  { color: #94e2d5; }
+    pre.lean .num { color: #fab387; }
+    pre.lean .cm  { color: #6c7086; font-style: italic; }
+
+    /* ── Phase list ── */
+    .phases { list-style: none; padding: 0; }
+    .phases > li { display: flex; gap: 0.9rem; align-items: flex-start; margin: 0.7rem 0; font-size: 0.92rem; }
+    .phase-num {
+      background: var(--teal); color: #fff;
+      border-radius: 3px; padding: 0.06rem 0.42rem;
+      font-size: 0.75rem; font-weight: bold; flex-shrink: 0; margin-top: 0.18rem;
+    }
+
+    /* ── Roadmap steps ── */
+    .rmap { list-style: none; padding: 0; margin: 0.3rem 0; }
+    .rmap li { display: flex; gap: 0.5rem; align-items: baseline; margin: 0.22rem 0; font-size: 0.88rem; }
+    .rnum { color: var(--primary); font-weight: bold; min-width: 1.3rem; flex-shrink: 0; }
+
+    hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+    code { font-family: "JetBrains Mono", "Fira Code", monospace; font-size: 0.83em; background: #f0f0f4; padding: 0.1em 0.3em; border-radius: 3px; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+<!-- ── HEADER ── -->
+<div class="doc-header">
+  <div class="doc-tag">DSC 190/291 Learning Theory Workshop · Full Notes</div>
+  <div class="doc-title">Three Faces of No-Free-Lunch</div>
+  <div class="doc-sub">Online Adversarial &nbsp;·&nbsp; Wolpert–Macready &nbsp;·&nbsp; Batch Stochastic</div>
+  <div class="doc-meta">
+    Group Members: Tongle Shen, Zida Jin<br>
+    Instructor: Tianhao Wang
+  </div>
+</div>
+
+<!-- ── OVERVIEW ── -->
+<h2>Overview — Three NFL Settings</h2>
+<table>
+  <thead><tr><th>Feature</th><th>Online Adversarial</th><th>Wolpert–Macready</th><th>Batch Stochastic</th></tr></thead>
+  <tbody>
+    <tr><td>Protocol</td><td>Sequential online prediction</td><td>Black-box optimisation</td><td>Batch PAC learning</td></tr>
+    <tr><td>Adversary</td><td><strong>Adaptive</strong>: sets $y_t$ after seeing $\hat y_t$</td><td><strong>Averaging</strong>: sum over all $f \in \mathcal{F}$</td><td><strong>Oblivious</strong>: fixes $D$ before sampling</td></tr>
+    <tr><td>Conclusion</td><td>$\exists f:\; M_T = T$</td><td>$\sum_f P(\vec y^{(m)}\mid f,\mathcal{A}_1) = \sum_f P(\vec y^{(m)}\mid f,\mathcal{A}_2)$</td><td>$\mathbb{P}[L_D(A(S))\geq\tfrac18]\geq\tfrac17$</td></tr>
+    <tr><td>Key mechanism</td><td>Bit-flip each round</td><td>Inside/outside coordinate split</td><td>Info-theoretic blindspot</td></tr>
+    <tr><td>Proof technique</td><td>Direct construction</td><td>Induction + factorised sum</td><td>Averaging + Markov</td></tr>
+    <tr><td>Lean lines</td><td>82</td><td>898</td><td>893</td></tr>
+  </tbody>
+</table>
+<div class="takeaway">
+  <strong>Unifying message.</strong>
+  Without structural assumptions on the problem, no algorithm outperforms any other.
+  Algorithm skill = alignment between inductive bias and the true problem prior.
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="part">
+  <div class="part-label">Part I</div>
+  <div class="part-title">Online Adversarial NFL</div>
+</div>
+
+<h2>Setting</h2>
+<p>At each round $t = 1, \ldots, T$:</p>
+<ol>
+  <li>Instance $x_t \in \mathcal{X}$ arrives.</li>
+  <li>Learner sees history $H_{t-1} = \bigl((x_1,y_1),\ldots,(x_{t-1},y_{t-1})\bigr)$, predicts $\hat{y}_t = A(H_{t-1})(x_t)$.</li>
+  <li>True label $y_t$ revealed; <strong>mistake</strong> if $\hat y_t \neq y_t$.</li>
+</ol>
+
+<div class="box definition">
+  <span class="box-label">Learner.</span>
+  $A : (\mathcal{X}\times\{0,1\})^* \to (\mathcal{X}\to\{0,1\})$
+</div>
+<div class="box definition">
+  <span class="box-label">Mistake count.</span>
+  $M_T = \displaystyle\sum_{t=1}^T \mathbf{1}[\hat y_t \neq y_t]$
+</div>
+<div class="box remark">
+  <span class="box-label">Adaptive adversary.</span>
+  Sees $\hat y_t$ <em>before</em> committing to $y_t$. One bit of information per round suffices to fool any $A$.
+</div>
+<div class="box remark">
+  <span class="box-label">Distinct instances.</span>
+  $x_1,\ldots,x_T$ all distinct — ensures $f$ is well-defined and prevents information gain from revisits.
+</div>
+
+<h2>Theorem &amp; Proof</h2>
+<div class="box theorem">
+  <span class="box-label">Theorem 1</span> (Online Adversarial NFL).
+  For any deterministic $A$ and $T$ distinct instances $x_1,\ldots,x_T$,
+  $\;\exists\, f : \mathcal{X}\to\{0,1\}$ such that $M_T = T$.
+</div>
+<div class="box proof">
+  <span class="box-label">Proof.</span>
+  Construct $f$ round by round. At round $t$, the learner computes $\hat y_t = A(H_{t-1})(x_t)$. Define:
+  $$f(x_t) \;:=\; 1 - \hat y_t \;=\; 1 - A(H_{t-1})(x_t)$$
+  Then $y_t = f(x_t) = 1 - \hat y_t \neq \hat y_t$ — every round is a mistake.
+  <ul>
+    <li><strong>Well-defined:</strong> $x_1,\ldots,x_T$ distinct → each point labeled exactly once.</li>
+    <li><strong>Causally consistent:</strong> $H_{t-1}$ uses only $y_i = f(x_i)$ defined at rounds $i &lt; t$.</li>
+    <li>Adversary only needs the single bit $\hat y_t$ — no knowledge of $A$'s internals. $\;\square$</li>
+  </ul>
+</div>
+<div class="takeaway">
+  <strong>Key insight.</strong>
+  The adaptive adversary exploits one bit of information per round.
+  No deterministic learner — however sophisticated — can avoid this.
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="part">
+  <div class="part-label">Part II</div>
+  <div class="part-title">Wolpert–Macready NFL</div>
+</div>
+
+<h2>Framework — Four Objects (Probabilistic)</h2>
+
+<div class="box definition">
+  <span class="box-label">Sample.</span>
+  $D_m = (\vec{x}^{(m)}, \vec{y}^{(m)})$ — $m$ <em>distinct</em> query–value pairs, time-ordered. $x_i \neq x_j$ for $i \neq j$ (no revisits).
+</div>
+<div class="box definition">
+  <span class="box-label">Algorithm.</span>
+  $\mathcal{A} : D_m \mapsto P(\,\cdot\,\mid D_m, \mathcal{A})$ — a <strong>conditional distribution</strong> over $\mathcal{X}\setminus\{\vec{x}^{(m)}\}$. Deterministic case = delta distribution.
+</div>
+<div class="box definition">
+  <span class="box-label">Performance.</span>
+  $P(\vec{y}^{(m)} \mid f, m, \mathcal{A}) \in [0,1]$ — probability that $\mathcal{A}$ produces $\vec{y}^{(m)}$ on $f$ in $m$ queries. Genuinely in $[0,1]$, not just $\{0,1\}$.
+</div>
+<div class="box definition">
+  <span class="box-label">Prior.</span>
+  $P(f)$ uniform on $\mathcal{F} = \mathcal{Y}^{\mathcal{X}}$. $|\mathcal{F}| = |\mathcal{Y}|^{|\mathcal{X}|}$. Uniform prior = complete ignorance over which $f$ we face.
+</div>
+<div class="box remark">
+  <span class="box-label">Black-box.</span>
+  $\mathcal{A}$ takes only $D_m$ as input — it does not see $f$ directly. Its randomness is internal; $\mathcal{A}$ itself (the full specification of its conditional distributions) is fixed.
+</div>
+
+<h2>Notation Reference</h2>
+<table>
+  <thead><tr><th>This presentation</th><th>Paper (WM 1997)</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td>$\mathcal{X}, \mathcal{Y}$</td><td>$\mathcal{X}, \mathcal{Y}$</td><td>Finite search space; finite cost-value space</td></tr>
+    <tr><td>$\mathcal{F} = \mathcal{Y}^{\mathcal{X}}$</td><td>$\mathcal{F}$</td><td>All cost functions $f : \mathcal{X} \to \mathcal{Y}$</td></tr>
+    <tr><td>$\vec{x}^{(m)} = (x_1,\ldots,x_m)$</td><td>$d_m^x$</td><td>Sequence of $m$ queried points</td></tr>
+    <tr><td>$\vec{y}^{(m)} = (y_1,\ldots,y_m)$</td><td>$d_m^y$</td><td>Sequence of $m$ observed cost values</td></tr>
+    <tr><td>$D_m = (\vec{x}^{(m)}, \vec{y}^{(m)})$</td><td>$d_m$</td><td>The full sample</td></tr>
+    <tr><td>$\mathcal{A}$</td><td>$\sigma$ (stochastic), $a$ (det.)</td><td>Algorithm — conditional distribution over next query</td></tr>
+    <tr><td>$f|_S$</td><td>(not used)</td><td>Restriction of $f$ to $S \subseteq \mathcal{X}$</td></tr>
+    <tr><td>$S_{\text{in}}, S_{\text{out}}$</td><td>(not used)</td><td>$\{\vec{x}^{(m)}\}$ and its complement in $\mathcal{X}$</td></tr>
+  </tbody>
+</table>
+
+<h2>Theorem &amp; Corollary</h2>
+<div class="box theorem">
+  <span class="box-label">Theorem</span> (Wolpert–Macready, 1997 — Probabilistic NFL).
+  For any two non-revisiting (possibly stochastic) algorithms $\mathcal{A}_1, \mathcal{A}_2$, any $m$, and any target cost-value sequence $\vec{y}^{(m)}$:
+  $$\sum_{f \in \mathcal{F}} P\!\bigl(\vec{y}^{(m)} \mid f, m, \mathcal{A}_1\bigr)
+    \;=\;
+    \sum_{f \in \mathcal{F}} P\!\bigl(\vec{y}^{(m)} \mid f, m, \mathcal{A}_2\bigr)
+    \;=\; |\mathcal{Y}|^{|\mathcal{X}|-m}.$$
+</div>
+<div class="box theorem">
+  <span class="box-label">Corollary.</span>
+  For any performance measure $\Phi : \mathcal{Y}^m \to \mathbb{R}$:
+  $$\sum_{f \in \mathcal{F}} \mathbb{E}_{\mathcal{A}}\bigl[\Phi(\vec{y}^{(m)})\bigr] \;\text{ is the same for every } \mathcal{A}.$$
+  <p><em>Proof.</em> Expand the expectation, swap summation order, and pull $\Phi(\vec{y}^{(m)})$ outside the inner sum (it does not depend on $f$):</p>
+  $$\sum_{f} \mathbb{E}_{\mathcal{A}}[\Phi]
+    = \sum_{\vec{y}^{(m)} \in \mathcal{Y}^m} \Phi(\vec{y}^{(m)}) \cdot \underbrace{\sum_{f \in \mathcal{F}} P(\vec{y}^{(m)} \mid f, m, \mathcal{A})}_{=\,|\mathcal{Y}|^{|\mathcal{X}|-m}\text{ by Theorem}}.$$
+  Each inner sum is algorithm-independent; the outer weighted sum inherits the property. $\;\square$
+</div>
+<div class="box key">
+  <span class="box-label">Reading.</span>
+  Any quantity that is a function only of the observed cost-value sequence has algorithm-invariant average over $\mathcal{F}$. Best-so-far, mean cost, variance, indicator of reaching optimum — all covered.
+</div>
+
+<h2>Proof Strategy: Trace + Coordinate Split</h2>
+<p>A <strong>trace</strong> is a query sequence $\vec{x}^{(m)}$ the algorithm might generate. Define the <strong>trace probability</strong>:
+$$\pi(\vec{x}^{(m)}) \;:=\; \prod_{i=1}^m P\bigl(x_i \,\big|\, D_{i-1},\, \mathcal{A}\bigr), \qquad D_{i-1} = (\vec{x}^{(i-1)}, \vec{y}^{(i-1)}).$$
+$\pi(\vec{x}^{(m)})$ depends on $\mathcal{A}$ and target $\vec{y}^{(m)}$, not on $f$.</p>
+
+<div class="box proof">
+  <span class="box-label">Marginalise over traces.</span>
+  $$P(\vec{y}^{(m)} \mid f, m, \mathcal{A}) \;=\; \sum_{\vec{x}^{(m)}} \pi(\vec{x}^{(m)}) \cdot \mathbf{1}\bigl[f(\vec{x}^{(m)}) = \vec{y}^{(m)}\bigr].$$
+  The indicator depends only on $f|_{S_{\text{in}}(\vec{x}^{(m)})}$ where $S_{\text{in}} = \{\vec{x}^{(m)}\}$.
+</div>
+<div class="box proof">
+  <span class="box-label">Inside/outside split.</span>
+  For each fixed trace, partition $\mathcal{X}$:
+  <ul>
+    <li>$S_{\text{in}} = \{\vec{x}^{(m)}\}$: $m$ coordinates pinned by the indicator.</li>
+    <li>$S_{\text{out}} = \mathcal{X} \setminus S_{\text{in}}$: $|\mathcal{X}|-m$ free coordinates.</li>
+  </ul>
+  Specifying $f$ = independently specifying $(f|_{S_{\text{in}}}, f|_{S_{\text{out}}})$, so $\sum_{f \in \mathcal{F}} = \sum_{f|_{S_{\text{in}}}} \sum_{f|_{S_{\text{out}}}}$.
+</div>
+<div class="takeaway">
+  Stochasticity adds one outer layer (sum over traces, weighted by $\pi$). The inside/outside count happens trace-by-trace; trace weights collapse via $\sum_{\vec{x}^{(m)}} \pi(\vec{x}^{(m)}) = 1$.
+</div>
+
+<h2>Proof: Base Case ($m = 1$)</h2>
+<p>With no sample yet, $\mathcal{A}$ draws $x_1$ from $P(\,\cdot\,\mid \emptyset, \mathcal{A})$. Then:
+$$P(\vec{y}^{(1)} \mid f, 1, \mathcal{A}) \;=\; \sum_{x_1 \in \mathcal{X}} P(x_1 \mid \emptyset, \mathcal{A}) \cdot \mathbf{1}[f(x_1) = y_1].$$</p>
+
+<div class="box proof">
+  <span class="box-label">Compute the sum.</span>
+  Swap summation order:
+  $$\sum_{f \in \mathcal{F}} P(\vec{y}^{(1)} \mid f, 1, \mathcal{A})
+    \;=\; \sum_{x_1} P(x_1 \mid \emptyset, \mathcal{A}) \;\cdot\; \underbrace{\sum_{f \in \mathcal{F}} \mathbf{1}[f(x_1) = y_1]}_{(\star)}.$$
+  $(\star) = |\mathcal{Y}|^{|\mathcal{X}|-1}$ — same for every $x_1$.
+</div>
+<div class="box proof">
+  <span class="box-label">Pull out the constant.</span>
+  $$\sum_{f} P(\vec{y}^{(1)} \mid f, 1, \mathcal{A})
+    \;=\; |\mathcal{Y}|^{|\mathcal{X}|-1} \cdot \underbrace{\sum_{x_1 \in \mathcal{X}} P(x_1 \mid \emptyset, \mathcal{A})}_{=\,1}
+    \;=\; |\mathcal{Y}|^{|\mathcal{X}|-1}. \quad \square$$
+</div>
+<div class="box remark">
+  <span class="box-label">Why this works.</span>
+  The count $(\star) = |\mathcal{Y}|^{|\mathcal{X}|-1}$ is independent of which $x_1$ the algorithm chooses. <em>Randomisation buys nothing.</em>
+</div>
+
+<h2>Proof: Inductive Step ($m \to m+1$)</h2>
+<p><strong>IH:</strong> $\sum_{f} P(\vec{y}^{(m)} \mid f, m, \mathcal{A}) = |\mathcal{Y}|^{|\mathcal{X}|-m}$ for every $\mathcal{A}$ and $\vec{y}^{(m)}$, equivalently $\sum_{\vec{x}^{(m)}} \pi(\vec{x}^{(m)}) = 1$.</p>
+
+<div class="box proof">
+  <span class="box-label">Chain rule (stochastic).</span>
+  $$P(\vec{y}^{(m+1)} \mid f, m+1, \mathcal{A})
+    = \sum_{\vec{x}^{(m)}} \pi(\vec{x}^{(m)}) \,\mathbf{1}[f(\vec{x}^{(m)}) = \vec{y}^{(m)}]
+    \cdot \sum_{x_{m+1} \in S_{\text{out}}} \!\!P(x_{m+1} \mid D_m, \mathcal{A}) \,\mathbf{1}[f(x_{m+1}) = y_{m+1}].$$
+  The no-revisit rule forces $x_{m+1} \in S_{\text{out}}$. The two factors act on <strong>disjoint coordinates</strong> of $f$.
+</div>
+<div class="box proof">
+  <span class="box-label">Sum over $f$, factorise.</span>
+  For each fixed $(\vec{x}^{(m)}, x_{m+1})$:
+  $$\sum_{f} \mathbf{1}[f(\vec{x}^{(m)}) = \vec{y}^{(m)}] \,\mathbf{1}[f(x_{m+1}) = y_{m+1}]
+    \;=\; |\mathcal{Y}|^{|\mathcal{X}|-(m+1)}.$$
+  Only the number of pinned coordinates matters; the specific $\vec{x}^{(m)}, x_{m+1}$ is irrelevant.
+</div>
+<div class="box proof">
+  <span class="box-label">Collapse the trace sums.</span>
+  $$\sum_{f} P(\vec{y}^{(m+1)} \mid f, m+1, \mathcal{A})
+    = |\mathcal{Y}|^{|\mathcal{X}|-(m+1)} \cdot \sum_{\vec{x}^{(m)}} \pi(\vec{x}^{(m)})
+      \underbrace{\sum_{x_{m+1}} P(x_{m+1} \mid D_m, \mathcal{A})}_{=\,1}
+    = |\mathcal{Y}|^{|\mathcal{X}|-(m+1)}. \quad \square$$
+</div>
+<div class="takeaway">
+  <strong>Core insight.</strong> Whether $\mathcal{A}$ is deterministic or stochastic, the count $|\mathcal{Y}|^{|\mathcal{X}|-m}$ depends only on $|\mathcal{X}|, |\mathcal{Y}|, m$ — not on which order the algorithm visits coordinates. All algorithms are equivalent averaged over $f$.
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="part">
+  <div class="part-label">Part III</div>
+  <div class="part-title">Batch Stochastic NFL</div>
+</div>
+
+<h2>Definition &amp; Theorem</h2>
+<div class="box definition">
+  <span class="box-label">Definition 1</span> (Learner, risk, failure probability).
+  <p>A <strong>deterministic learner</strong>: $A:(\mathcal{X}\times\{0,1\})^*\to(\mathcal{X}\to\{0,1\})$.</p>
+  <p><strong>Population risk</strong>: $L_D(h):=\mathbb{P}_{(x,y)\sim D}[h(x)\neq y]$. &ensp; $D$ is <strong>realizable</strong> if $\inf_{h\in\mathcal{H}} L_D(h)=0$.</p>
+</div>
+<div class="box theorem">
+  <span class="box-label">Theorem 3</span> (Batch Stochastic NFL).
+  For every deterministic $A$ and $n &lt; |\mathcal{X}|/2$,
+  $\;\exists$ realizable $D$ on $\mathcal{X}\times\{0,1\}$ such that
+  $$\mathbb{P}_{S\sim D^n}\!\bigl[L_D(A(S)) \geq \tfrac{1}{8}\bigr] \;\geq\; \frac{1}{7}.$$
+</div>
+<div class="box key">
+  <span class="box-label">Key quantifier order.</span>
+  <strong>Learner $A$ is chosen first</strong> $\;\Longrightarrow\;$ <strong>bad distribution $D$ is chosen after.</strong>
+  The adversary tailors $D$ to $A$'s specific strategy.
+</div>
+<div class="box remark">
+  <span class="box-label">Adaptive vs Oblivious adversary.</span>
+  <p><strong>Adaptive</strong> (online): adversary sees $A$'s prediction each round before setting the label — fully responsive, maximally powerful.</p>
+  <p><strong>Oblivious</strong> (here): adversary commits to $D$ once, before the first data point is drawn — blind to all training and predictions.</p>
+</div>
+
+<h2>Proof Intuition</h2>
+<p>Adversary picks $2n$ domain points $x_1,\ldots,x_{2n}$. Training sample $S$ has only $n$ examples — even with no repeats, learner sees at most $n$ distinct points. At least $n$ points are <em>unseen</em> — invisible to $A$ — constituting at least half the distribution support.</p>
+<p>On each unseen point $A$ has no information; prediction is no better than guessing:</p>
+$$\text{error on unseen} = \frac{1}{2}, \quad \text{unseen mass} \;\geq\; \frac{n}{2n} = \frac{1}{2}$$
+$$\mathbb{E}\bigl[L_D(A(S))\bigr] \;\geq\; \frac{1}{2}\cdot\frac{1}{2} \;=\; \frac{1}{4}$$
+
+<h2>Step 1: Build Many Possible Hard Distributions</h2>
+<div class="box remark">
+  <span class="box-label">Setup.</span>
+  Fix an arbitrary learner $A$ and sample size $n$. Choose $2n$ distinct domain points $x_1,\ldots,x_{2n}\in\mathcal{X}$.
+</div>
+<div class="box definition">
+  <span class="box-label">Family of distributions.</span>
+  For every binary labeling $b=(b_1,\ldots,b_{2n})\in\{0,1\}^{2n}$, define:
+  $$f_b(x_i) = b_i, \qquad D_b\bigl((x_i,\,b_i)\bigr) = \frac{1}{2n}.$$
+  $D_b$ is uniform over the $2n$ labeled points. There are $2^{2n}$ such realizable distributions.
+</div>
+
+<h2>Steps 2&amp;3: Randomize Labeling; Unseen Labels Stay Random</h2>
+<div class="box remark">
+  <span class="box-label">Step 2 — Proof device.</span>
+  Let $B=(B_1,\ldots,B_{2n})$ with $B_i\overset{\text{i.i.d.}}{\sim}\text{Bern}(\tfrac12)$. Draw $S\sim D_B^n$. This is only an averaging trick — the final result uses a fixed labeling $b^*$.
+</div>
+<div class="box definition">
+  <span class="box-label">Seen / Unseen sets.</span>
+  $$V(S) = \{i\in[2n]:x_i\text{ appears in }S\},\quad |V(S)|\leq n$$
+  $$U(S) = [2n]\setminus V(S),\qquad |U(S)|\geq n$$
+</div>
+<div class="box key">
+  <span class="box-label">Step 3 — Key line.</span>
+  Condition on $S$: hypothesis $\hat h = A(S)$ is fixed. For any $i\in U(S)$, bit $B_i$ was never revealed — it remains an independent fair coin:
+  $$\mathbb{E}\bigl[\mathbf{1}[\hat h(x_i)\neq B_i]\,\bigm|\,S\bigr] = \frac{1}{2}.$$
+</div>
+
+<h2>Step 4: Lower-Bound the Expected Population Risk</h2>
+<div class="box proof">
+  <span class="box-label">Population risk under $D_B$.</span>
+  $$L_{D_B}(A(S)) \;=\; \frac{1}{2n}\sum_{i=1}^{2n}\mathbf{1}\bigl[A(S)(x_i)\neq B_i\bigr]$$
+</div>
+<div class="box proof">
+  <span class="box-label">Conditional bound (given $S$).</span>
+  Since $\mathbb{E}[\mathbf{1}[\cdots]\mid S]=\tfrac12$ for each $i\in U(S)$ and $|U(S)|\geq n$:
+  $$\mathbb{E}\bigl[L_{D_B}(A(S))\bigm| S\bigr]
+    \;\geq\; \frac{n}{2n}\cdot\frac{1}{2}
+    \;=\; \frac{1}{4}.$$
+</div>
+<div class="box key">
+  <span class="box-label">Unconditional bound (tower law).</span>
+  $$\mathbb{E}_B\,\mathbb{E}_{S\sim D_B^n}\!\bigl[L_{D_B}(A(S))\bigr] \;\geq\; \frac{1}{4}.$$
+</div>
+
+<h2>Step 5: Extract One Fixed Bad Labeling</h2>
+<div class="box key">
+  <span class="box-label">Probabilistic method.</span>
+  If the average of a quantity over a finite set is $\geq c$, at least one element must itself be $\geq c$.
+  Therefore $\exists\,b^*\in\{0,1\}^{2n}$ such that:
+  $$\mathbb{E}_{S\sim D_{b^*}^n}\!\bigl[L_{D_{b^*}}(A(S))\bigr] \;\geq\; \frac{1}{4}.$$
+</div>
+<div class="box theorem">
+  <span class="box-label">Set $D = D_{b^*}$.</span>
+  This is the <strong>fixed bad distribution</strong> promised by Theorem 3. It is realizable (by $f_{b^*}$, which has zero risk), and learner $A$ suffers expected population risk $\geq\tfrac{1}{4}$ under $D$.
+</div>
+
+<h2>Step 6: Convert Expected Loss to Failure Probability (Markov)</h2>
+<p>Let $Z = L_D(A(S))\in[0,1]$ with $S\sim D^n$. We know $\mathbb{E}[Z]\geq\tfrac{1}{4}$. Let $p = \mathbb{P}(Z\geq\tfrac{1}{8})$. Goal: show $p\geq\tfrac{1}{7}$.</p>
+<div class="box proof">
+  <span class="box-label">Split on $\tfrac{1}{8}$.</span>
+  <p>If $Z &lt; \tfrac{1}{8}$: contribution $\leq\tfrac{1}{8}(1-p)$. If $Z \geq \tfrac{1}{8}$: contribution $\leq p$.</p>
+  $$\mathbb{E}[Z] \;\leq\; (1-p)\cdot\frac{1}{8}+p\cdot 1 \;=\; \frac{1}{8}+\frac{7p}{8}$$
+</div>
+<div class="box key">
+  <span class="box-label">Combine and solve.</span>
+  $$\frac{1}{4} \;\leq\; \frac{1}{8}+\frac{7p}{8} \;\Longrightarrow\; p\;\geq\;\frac{1}{7}.\quad\square$$
+</div>
+<div class="box remark">
+  <span class="box-label">Why $\tfrac{1}{8}$ and $\tfrac{1}{7}$.</span>
+  $\tfrac{1}{8}$ is a convenient threshold below $\tfrac{1}{4}$. The general Markov bound gives $p\geq\frac{\mathbb{E}[Z]-\varepsilon}{1-\varepsilon}$; any $\varepsilon&lt;\tfrac{1}{4}$ works — the constants are not magical.
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="part">
+  <div class="part-label">Part IV</div>
+  <div class="part-title">Lean 4 Formalisation</div>
+</div>
+
+<h2>Wolpert–Macready: Formal Statements</h2>
+
+<h3>Histogram identity</h3>
+<pre class="lean"><span class="kw">theorem</span> <span class="fn">wolpert_macready</span>
+    [<span class="ty">Fintype</span> X] [<span class="ty">Fintype</span> Y] [<span class="ty">DecidableEq</span> X]
+    (A₁ A₂ : <span class="ty">SearchAlg</span> X Y) (m : <span class="ty">Nat</span>)
+    (hm : m ≤ <span class="fn">Fintype.card</span> X)
+    (h₁ : A₁.<span class="fn">NonRevisiting</span>) (h₂ : A₂.<span class="fn">NonRevisiting</span>)
+    (c : <span class="ty">List</span> Y) (hc : c.<span class="fn">length</span> = m) :
+    (∑ f : X → Y, <span class="fn">observations</span> A₁ f m c) =
+       ∑ f : X → Y, <span class="fn">observations</span> A₂ f m c</pre>
+
+<h3>Expected performance corollary</h3>
+<pre class="lean"><span class="kw">theorem</span> <span class="fn">wolpert_macready_avg</span>
+    [<span class="ty">Fintype</span> X] [<span class="ty">Fintype</span> Y] [<span class="ty">DecidableEq</span> X]
+    (A₁ A₂ : <span class="ty">SearchAlg</span> X Y) (m : <span class="ty">Nat</span>)
+    (hm : m ≤ <span class="fn">Fintype.card</span> X)
+    (h₁ : A₁.<span class="fn">NonRevisiting</span>) (h₂ : A₂.<span class="fn">NonRevisiting</span>)
+    (φ : <span class="ty">List</span> Y → <span class="ty">ℝ≥0∞</span>) :
+    (∑ f : X → Y, <span class="fn">expectedPerformance</span> A₁ f m φ) =
+       ∑ f : X → Y, <span class="fn">expectedPerformance</span> A₂ f m φ</pre>
+
+<h2>Wolpert–Macready: Proof Roadmap</h2>
+
+<h3>Central invariant</h3>
+<pre class="lean"><span class="kw">theorem</span> <span class="fn">avgFuture_eq_pow</span>
+    (A : <span class="ty">SearchAlg</span> X Y) (hA : A.<span class="fn">NonRevisiting</span>)
+    (h : <span class="ty">List</span> (X × Y)) (hh : (h.<span class="fn">map</span> <span class="fn">Prod.fst</span>).<span class="fn">Nodup</span>)
+    (c : <span class="ty">List</span> Y) (hbound : ...) :
+    <span class="fn">avgFuture</span> A h c =
+      (<span class="fn">Fintype.card</span> Y ^ (<span class="fn">Fintype.card</span> X - (h.<span class="fn">length</span> + c.<span class="fn">length</span>)) : <span class="ty">ℝ≥0∞</span>)</pre>
+
+<ul class="rmap">
+  <li><span class="rnum">①</span><span>Define <code>queryTraceFrom A h c</code> — target-free query PMF</span></li>
+  <li><span class="rnum">②</span><span><code>queryTraceFrom_support_length</code>, <code>queryTraceFrom_support_nodup_disjoint</code></span></li>
+  <li><span class="rnum">③</span><span><code>Consistent f h</code>, bijection <code>consistentEquivComplement</code> (inside↔free outside)</span></li>
+  <li><span class="rnum">④</span><span><code>avgFuture_cons</code> → <code>avgFuture_eq_pow</code> (the central invariant = $|\mathcal{Y}|^{|\mathcal{X}|-(|h|+|c|)}$)</span></li>
+  <li><span class="rnum">⑤</span><span>Bridge: <code>trace_eq_traceFrom_nil</code>, <code>observations_eq_observationsFrom_nil</code></span></li>
+  <li><span class="rnum">⑥</span><span><code>wolpert_macready</code></span></li>
+  <li><span class="rnum">⑦</span><span><code>wolpert_macready_avg</code> — sum histogram against $\phi$</span></li>
+</ul>
+<div class="box remark">
+  <span class="box-label">Key engineering.</span>
+  Lean induction is over $c$ front-recursively; paper induction is on $m$ from outside. Reconciled by <code>traceFrom_append_rec</code>.
+</div>
+
+<h2>Batch Stochastic: Formal Statement</h2>
+<pre class="lean"><span class="kw">theorem</span> <span class="fn">batch_stochastic_NFL</span>
+    [<span class="ty">Fintype</span> X] [<span class="ty">Nonempty</span> X] [<span class="ty">MeasurableSingletonClass</span> X]
+    (A : <span class="ty">Learner</span> X) (m : <span class="ty">Nat</span>)
+    (hm : <span class="num">2</span> * m ≤ <span class="fn">Fintype.card</span> X) :
+    ∃ D : <span class="ty">Measure</span> (X × <span class="ty">Bool</span>),
+      <span class="ty">IsProbabilityMeasure</span> D ∧
+      (∃ f : X → <span class="ty">Bool</span>, <span class="fn">risk</span> D f = <span class="num">0</span>) ∧
+      (<span class="num">1</span> : ℝ) / <span class="num">7</span> ≤ <span class="fn">failureProb</span> D A m (<span class="num">1</span> / <span class="num">8</span>)</pre>
+
+<div class="box remark">
+  <span class="box-label">[Nonempty X] is essential.</span>
+  <code>no_probability_measure_empty_prod_bool</code> proves there is no probability measure on <code>Empty × Bool</code> — the theorem would be vacuously false without this assumption.
+</div>
+
+<h2>Batch Stochastic: Proof Roadmap</h2>
+
+<ul class="rmap">
+  <li><span class="rnum">①</span><span><code>no_probability_measure_empty_prod_bool</code> — empty case</span></li>
+  <li><span class="rnum">②</span><span><code>batch_stochastic_NFL_zero</code> — Dirac for $m=0$</span></li>
+  <li><span class="rnum">③</span><span><code>exists_support_card</code>: choose $C\subseteq X$ of size $2m$; work on abstract subtype $Z$</span></li>
+  <li><span class="rnum">④</span><span><code>splitAt z</code> bijection + <code>abstractSampleList_splitAt_false_eq_true</code> → <code>sum_abstractRisk_fixed_sample_ge</code></span></li>
+  <li><span class="rnum">⑤</span><span><code>sum_piecewise_one_eighth</code> + <code>exists_abstractFailureRate_ge</code> (finite probabilistic method)</span></li>
+  <li><span class="rnum">⑥</span><span><code>abstractFailureRate_le_failureProb_graph</code> — lift to measure via <code>Measure.pi</code></span></li>
+  <li><span class="rnum">⑦</span><span>Assemble <code>batch_stochastic_NFL</code></span></li>
+</ul>
+<div class="box remark">
+  <span class="box-label">Abstract-to-concrete.</span>
+  Hard combinatorics ($V/U$ argument, <code>splitAt</code> pairing, <code>Finset.sum_comm</code>) stay in a purely finite, decidable subtype $Z$. Measure theory enters only at step ⑥.
+</div>
+
+<h2>Proof Statistics</h2>
+<table>
+  <thead><tr><th>Metric</th><th>Online Adversarial</th><th>Wolpert–Macready</th><th>Batch Stochastic</th></tr></thead>
+  <tbody>
+    <tr><td>Lines of Lean</td><td>82</td><td>898</td><td>893</td></tr>
+    <tr><td>Time (Codex)</td><td>2 min</td><td>48 min</td><td>41 min</td></tr>
+    <tr><td>File edits</td><td>4</td><td>26</td><td>18</td></tr>
+    <tr><td>Lake Build Calls (P/F)</td><td>3 (3/0)</td><td>26 (11/15)</td><td>16 (12/4)</td></tr>
+    <tr><td>Mathlib queries</td><td>—</td><td>57</td><td>61</td></tr>
+    <tr><td><code>sorry</code></td><td>0</td><td>0</td><td>0</td></tr>
+  </tbody>
+</table>
+<div class="takeaway">
+  All three proofs compile and pass <code>/proof_check</code> with zero <code>sorry</code>s.
+  Without <code>/plan</code>, the AI stalled at scaffolding for WM and Batch. With <code>/plan</code> + <code>/proof_write</code>: both proofs compiled successfully.
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<div class="part">
+  <div class="part-label">Part V</div>
+  <div class="part-title">Project Workflow</div>
+</div>
+
+<h2>Phases 1–9</h2>
+<ul class="phases">
+  <li>
+    <span class="phase-num">1</span>
+    <div><strong>Theorem selection.</strong>
+      Online Adversarial (covered in class) not aligned with first impression.
+      Chose <strong>Wolpert–Macready</strong> (static averaging NFL) and <strong>Batch Stochastic</strong> (PAC-learning version, HW3) as primary targets. Online kept as warm-up.
+    </div>
+  </li>
+  <li>
+    <span class="phase-num">2</span>
+    <div><strong>Mathlib survey.</strong>
+      Queried AI for existing Lean 4 formalisations: neither theorem exists in Mathlib.
+    </div>
+  </li>
+  <li>
+    <span class="phase-num">3</span>
+    <div><strong>Theorem statements + early bug.</strong>
+      AI drafted Lean targets for all three theorems.
+      Found missing <code>[Nonempty X]</code> in Batch statement.
+    </div>
+  </li>
+  <li>
+    <span class="phase-num">4</span>
+    <div><strong>Proof sources.</strong>
+      <em>Wolpert–Macready:</em> fed original 1997 paper — notation dense and inconsistent; spent considerable time having AI reorganise into clean formulation.
+      <em>Batch:</em> fed HW3 step-by-step proof directly — a clean source.
+    </div>
+  </li>
+  <li>
+    <span class="phase-num">5</span>
+    <div><strong>Baseline (Codex XHigh, no skill).</strong>
+      Online Adversarial: <strong>compiled</strong> in one pass (simple induction).
+      WM and Batch: AI <strong>failed</strong> — produced <code>sorry</code>-filled fragments without a structured plan.
+      <em>Takeaway:</em> Unstructured prompting insufficient for proofs of this complexity.
+    </div>
+  </li>
+  <li>
+    <span class="phase-num">6</span>
+    <div><strong>Skill development: <code>/plan</code> and <code>/proof_write</code>.</strong>
+      <p><code>/plan</code> — Decompose into named sub-goals, write a roadmap markdown and save checkpoint states.</p>
+      <p><code>/proof_write</code> — Forces AI to iterate each placeholder until Lake build passes. Loop: attempt → Lake diagnostic → fix → repeat. Compilation = exit condition.</p>
+      Both WM and Batch compiled successfully with these skills.
+    </div>
+  </li>
+  <li>
+    <span class="phase-num">7</span>
+    <div><strong>Verification.</strong>
+      <p><code>/proof_check</code> — Scans the completed file for hidden <code>sorry</code>s, admitted axioms, and vacuous proofs.</p>
+      Both files passed: zero <code>sorry</code>s.
+    </div>
+  </li>
+  <li>
+    <span class="phase-num">8</span>
+    <div><strong>Replication with Claude Code.</strong>
+      Same skill-based workflow, different agent. Both proofs compiled and passed <code>/proof_check</code>.
+      Claude Code does not see Codex proof. It prefers Codex proof when finished.
+      <table style="margin-top:0.4rem">
+        <thead><tr><th>Theorem</th><th>Codex</th><th>Claude Code</th><th>Check</th></tr></thead>
+        <tbody>
+          <tr><td>Wolpert–Macready</td><td>48 min</td><td>≈ 90 min</td><td>Pass ✓</td></tr>
+          <tr><td>Batch Stochastic</td><td>41 min</td><td>≈ 30 min</td><td>Pass ✓</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </li>
+  <li>
+    <span class="phase-num">9</span>
+    <div><strong>Notes &amp; Slides. <em>(Claude Code)</em></strong>
+      <p>Fed course website templates to AI.</p>
+      <p>Generated per-theorem HTML notes and slides, then unified into a combined presentation note and full slide deck.</p>
+      <p>Prompt to modify each slide.</p>
+    </div>
+  </li>
+</ul>
+
+</div><!-- .page -->
+</body>
+</html>
